@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: se-project
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    healthCheckPath: /api/health
+    autoDeploy: true
