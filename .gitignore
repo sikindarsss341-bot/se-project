@@ -1,3 +1,9 @@
+# Large Binary Files (model weights & videos - too large for GitHub)
+*.pt
+*.mp4
+*.avi
+*.mov
+
 # Python
 __pycache__/
 *.py[cod]
