@@ -1,8 +1,8 @@
-# Large Binary Files (model weights & videos - too large for GitHub)
-*.pt
+# Large Video Files (too large for GitHub)
 *.mp4
 *.avi
 *.mov
+# NOTE: *.pt model files ARE included (30MB - needed for Railway Docker deployment)
 
 # Python
 __pycache__/
