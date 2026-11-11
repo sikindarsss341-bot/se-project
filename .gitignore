@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+pip-wheel-metadata/
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# AI Model weights (large binary - optional to include)
+# models/best.pt  # Uncomment this line if you want to exclude the model
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+backend/safety_surveillance.db
+
+# Logs & Evidence
+backend/evidence/
+backend/logs/
+*.log
+
+# Reports (generated at runtime)
+backend/reports/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Node (if any)
+node_modules/
+
+# Temp / Test artifacts
+*.tmp
+*.bak

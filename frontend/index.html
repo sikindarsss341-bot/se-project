@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Industrial Safety AI - Intelligent Surveillance System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Chart.js for Phase 3 Interactive Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- App Container -->
+  <div class="app-layout">
+    
+    <!-- LEFT SIDEBAR (Dark Navy) -->
+    <aside class="sidebar" id="sidebar">
+      <!-- Sidebar Brand -->
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <i class="fa-solid fa-helmet-safety"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Industrial Safety AI</span>
+          <span class="brand-sub">AI-Based Industrial Safety Surveillance</span>
+        </div>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="sidebar-nav">
+        <a href="#dashboard" class="nav-item" data-view="dashboard">
+          <i class="fa-solid fa-table-columns"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <div class="nav-group">
+          <div class="nav-group-header">
+            <i class="fa-solid fa-crosshairs"></i>
+            <span>Detection</span>
+            <i class="fa-solid fa-chevron-down nav-arrow"></i>
+          </div>
+          <div class="nav-group-items">
+            <a href="#image-detection" class="nav-sub-item" data-view="image-detection">
+              <i class="fa-regular fa-image"></i>
+              <span>Image Detection</span>
+            </a>
+            <a href="#video-detection" class="nav-sub-item active" data-view="video-detection">
+              <i class="fa-solid fa-video"></i>
+              <span>Video Detection</span>
+            </a>
+            <a href="#live-monitoring" class="nav-sub-item" data-view="live-monitoring">
+              <i class="fa-solid fa-tower-broadcast"></i>
+              <span>Live Monitoring</span>
+            </a>
+          </div>
+        </div>
+
+        <a href="#analytics" class="nav-item" data-view="analytics">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Analytics</span>
+        </a>
+
+        <a href="#incident-history" class="nav-item" data-view="incident-history">
+          <i class="fa-solid fa-clipboard-list"></i>
+          <span>Incident History</span>
+        </a>
+
+        <a href="#alerts" class="nav-item" data-view="alerts">
+          <i class="fa-solid fa-bell"></i>
+          <span>Alerts</span>
+          <span class="badge-alert-count" id="sidebarAlertBadge" style="display: none;">0</span>
+        </a>
+
+        <a href="#reports" class="nav-item" data-view="reports">
+          <i class="fa-regular fa-file-lines"></i>
+          <span>Reports</span>
+        </a>
+
+        <a href="#model-info" class="nav-item" data-view="model-info">
+          <i class="fa-solid fa-microchip"></i>
+          <span>Model Info</span>
+        </a>
+
+        <a href="#settings" class="nav-item" data-view="settings">
+          <i class="fa-solid fa-gear"></i>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <!-- Sidebar Phase 3 Progress Card -->
+      <div class="sidebar-footer">
+        <div class="phase-card">
+          <div class="phase-card-header">
+            <div class="phase-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>Phase 3</span>
+            </div>
+          </div>
+          <div class="phase-title">Analytics & Incident Mgmt</div>
+          <div class="phase-progress-bar">
+            <div class="progress-track">
+              <div class="progress-fill" style="width: 100%; background: linear-gradient(90deg, #6366f1, #10b981);"></div>
+            </div>
+            <div class="progress-steps">
+              <div class="step-dot completed" title="Phase 1: Model & Image Foundation"><i class="fa-solid fa-check"></i></div>
+              <div class="step-dot completed" title="Phase 2: Video & Live Surveillance"><i class="fa-solid fa-check"></i></div>
+              <div class="step-dot completed" title="Phase 3: Analytics & Incident Management"><i class="fa-solid fa-check"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN APP WRAPPER -->
+    <div class="main-wrapper">
+      
+      <!-- TOP NAVIGATION BAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          
+          <div class="header-branding">
+            <div class="logo-icon-box">
+              <i class="fa-solid fa-helmet-safety"></i>
+            </div>
+            <div class="logo-titles">
+              <h1 class="logo-main-title">Industrial Safety AI</h1>
+              <p class="logo-sub-title">AI-Based Industrial Safety Surveillance</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Dynamic Model Status Badge -->
+          <div class="model-status-indicator status-ready" id="topModelStatus">
+            <span class="status-pulse"></span>
+            <i class="fa-solid fa-circle-check status-icon" id="topModelIcon"></i>
+            <span class="status-label" id="topModelLabel">Model Ready</span>
+          </div>
+
+          <!-- Info Icon -->
+          <button class="icon-btn info-btn" id="infoBtn" title="System Specifications & Architecture">
+            <i class="fa-regular fa-circle-question"></i>
+          </button>
+
+          <!-- Notification Bell with Count -->
+          <button class="icon-btn alert-bell-btn" id="topAlertBell" title="Safety Alerts" onclick="navigateTo('alerts')">
+            <i class="fa-solid fa-bell"></i>
+            <span class="alert-count-pill" id="topAlertCount" style="display: none;">0</span>
+          </button>
+
+          <!-- Admin Profile Section -->
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="profile-pill">
+              <div class="avatar-circle">
+                <i class="fa-solid fa-user-shield"></i>
+              </div>
+              <span class="admin-name">Admin</span>
+              <i class="fa-solid fa-chevron-down profile-arrow"></i>
+            </div>
+            <div class="profile-menu" id="profileMenu">
+              <div class="profile-menu-header">
+                <strong>Safety Operations Center</strong>
+                <span class="text-muted">admin@safetyai.local</span>
+              </div>
+              <div class="profile-menu-divider"></div>
+              <a href="#alerts" class="profile-menu-item" data-view="alerts">
+                <i class="fa-solid fa-bell"></i> Safety Alerts
+              </a>
+              <a href="#model-info" class="profile-menu-item" data-view="model-info">
+                <i class="fa-solid fa-microchip"></i> Model Specifications
+              </a>
+              <a href="#dashboard" class="profile-menu-item" data-view="dashboard">
+                <i class="fa-solid fa-table-columns"></i> Dashboard
+              </a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- MAIN CONTENT CONTAINER -->
+      <main class="content-container">
+
+        <!-- ============================================== -->
+        <!-- VIEW: IMAGE DETECTION (PHASE 1 CORE FEATURE)   -->
+        <!-- ============================================== -->
+        <section class="view-section" id="view-image-detection">
+          
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box" style="background: #e0e7ff; color: #4338ca;">
+                <i class="fa-regular fa-image"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Image Detection & PPE Verification</h2>
+                <p class="page-description">
+                  Upload industrial workplace images to run real-time inference with trained YOLO model (<code>best.pt</code>).
+                </p>
+              </div>
+            </div>
+            <div class="phase-pill-banner">
+              <span class="pill-tag" style="background: #4338ca;">Phase 1</span>
+              <span class="pill-text">Core PPE Detection</span>
+            </div>
+          </div>
+
+          <!-- 2-Column Workspace -->
+          <div class="live-workspace-grid">
+            <!-- Column 1: Upload Card -->
+            <div class="workspace-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                  <span>Upload Inspection Image</span>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <!-- Dropzone -->
+                <div class="drop-zone" id="dropZone">
+                  <input type="file" id="imageInput" accept="image/jpeg,image/png,image/jpg" class="file-input-hidden">
+                  
+                  <div class="drop-zone-content" id="dropZonePrompt">
+                    <div class="upload-video-icon-box">
+                      <i class="fa-regular fa-image"></i>
+                    </div>
+                    <p class="drop-main-text"><strong>Drag & drop an image here</strong></p>
+                    <p class="drop-sub-text">Supports JPG, PNG, WEBP (Max 10 MB)</p>
+                    
+                    <button type="button" class="btn btn-primary choose-video-btn" id="chooseImgBtn">
+                      <i class="fa-regular fa-folder-open"></i> Browse Image
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Staged Image Info Card -->
+                <div class="staged-video-pill-card" id="stagedPreview" style="display: none;">
+                  <div class="staged-video-thumb">
+                    <img src="" id="stagedThumb" alt="Image Thumbnail">
+                  </div>
+                  <div class="staged-video-details">
+                    <strong class="staged-filename" id="stagedName">—</strong>
+                    <span class="staged-meta-text" id="stagedSize">—</span>
+                  </div>
+                  <button type="button" class="btn-trash-staged" id="btnRemoveStaged" title="Remove image">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                </div>
+
+                <!-- Quick Load Sample Button -->
+                <div class="sample-image-box" style="margin-top: 14px;">
+                  <button type="button" class="btn btn-sample" id="loadSampleBtn">
+                    <i class="fa-solid fa-bolt"></i> Load Sample PPE Image
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column 2: Result Card -->
+            <div class="workspace-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-crosshairs"></i>
+                  <span>AI Detection Output</span>
+                </div>
+                <div class="status-pill-completed" id="inferenceTimerBadge" style="display: none;">
+                  <i class="fa-solid fa-stopwatch"></i>
+                  <span id="inferenceTimeVal">0.00s</span>
+                </div>
+              </div>
+
+              <div class="card-body" style="padding: 14px;">
+                <div class="video-player-container" style="min-height: 280px; position: relative;">
+                  <div class="live-offline-overlay" id="resultPlaceholder">
+                    <div class="offline-icon-box" style="background: #1e293b; color: #64748b;">
+                      <i class="fa-regular fa-image"></i>
+                    </div>
+                    <h3>No Image Analyzed</h3>
+                    <p>Upload or drag an image and click <strong>Run Detection</strong> to view annotated bounding boxes.</p>
+                  </div>
+
+                  <div id="canvasWrapper" style="display: none; width: 100%; text-align: center;">
+                    <img id="resultImage" src="" alt="Detection Result" style="max-width: 100%; max-height: 380px; object-fit: contain; border-radius: var(--radius-sm);">
+                  </div>
+
+                  <!-- Processing Spinner Overlay -->
+                  <div class="processing-overlay" id="processingOverlay" style="display: none;">
+                    <div class="spinner-box">
+                      <i class="fa-solid fa-gear fa-spin"></i>
+                      <span>Running YOLO Model Inference...</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- KPI Metric Pills -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px;">
+                  <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 12px; text-align: center;">
+                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">Total Items</span>
+                    <strong style="font-size: 1.15rem; color: var(--text-dark);" id="summaryTotalCount">0</strong>
+                  </div>
+                  <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 12px; text-align: center;">
+                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">Unique Classes</span>
+                    <strong style="font-size: 1.15rem; color: var(--text-dark);" id="summaryUniqueClasses">0</strong>
+                  </div>
+                  <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 12px; text-align: center;">
+                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">Peak Confidence</span>
+                    <strong style="font-size: 1.15rem; color: var(--text-dark);" id="summaryPeakConf">0.00</strong>
+                  </div>
+                </div>
+
+                <!-- Detection Items Table -->
+                <div class="table-responsive" style="margin-top: 14px; max-height: 180px; overflow-y: auto;">
+                  <table class="timeline-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Class Detected</th>
+                        <th style="text-align: right;">Confidence</th>
+                      </tr>
+                    </thead>
+                    <tbody id="detectionTableBody">
+                      <tr><td colspan="3" class="text-center text-muted" style="padding: 20px;">Awaiting model inference...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons Bar -->
+          <div class="action-buttons-bar" style="margin-top: 20px;">
+            <div class="action-left">
+              <button type="button" class="btn btn-action-primary" id="btnRunDetection">
+                <i class="fa-solid fa-play"></i>
+                <span>Run Detection</span>
+              </button>
+
+              <button type="button" class="btn btn-action-secondary" id="btnDownloadResult" disabled>
+                <i class="fa-solid fa-download"></i>
+                <span>Download Result</span>
+              </button>
+              
+              <button type="button" class="btn btn-action-ghost" id="btnClearAll">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Clear</span>
+              </button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- VIEW: VIDEO DETECTION (MATCHING EXACT REFERENCE IMAGE!)  -->
+        <!-- ======================================================== -->
+        <section class="view-section active" id="view-video-detection">
+          
+          <!-- Page Header Banner -->
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box title-icon-purple">
+                <i class="fa-solid fa-video"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Video Detection</h2>
+                <p class="page-description">
+                  Upload an industrial video to detect PPE and safety violations in real time.
+                </p>
+              </div>
+            </div>
+            <div class="phase-pill-banner">
+              <span class="pill-tag">Phase 2</span>
+              <span class="pill-text">Video Surveillance & Live Monitoring</span>
+            </div>
+          </div>
+
+          <!-- Top 4 Summary Cards (Exact match to reference design) -->
+          <div class="metrics-grid">
+            <!-- Card 1: Videos Analyzed -->
+            <div class="metric-card card-purple-icon">
+              <div class="metric-circle-icon icon-circle-purple">
+                <i class="fa-solid fa-play"></i>
+              </div>
+              <div class="metric-info">
+                <span class="metric-label">Videos Analyzed</span>
+                <span class="metric-value" id="metricVideosAnalyzed">0</span>
+              </div>
+            </div>
+
+            <!-- Card 2: Total Detections -->
+            <div class="metric-card card-green-icon">
+              <div class="metric-circle-icon icon-circle-green">
+                <i class="fa-solid fa-helmet-safety"></i>
+              </div>
+              <div class="metric-info">
+                <span class="metric-label">Total Detections</span>
+                <span class="metric-value" id="metricVideoTotalDetections">0</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Safety Violations -->
+            <div class="metric-card card-orange-icon">
+              <div class="metric-circle-icon icon-circle-orange">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div class="metric-info">
+                <span class="metric-label">Safety Violations</span>
+                <span class="metric-value" id="metricVideoViolations">0</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Compliance Rate -->
+            <div class="metric-card card-blue-icon">
+              <div class="metric-circle-icon icon-circle-blue">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <div class="metric-info">
+                <span class="metric-label">Compliance Rate</span>
+                <span class="metric-value" id="metricComplianceRate">Not enough data</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main 3-Column Top Grid (Exact match to reference layout) -->
+          <div class="video-detection-main-grid">
+            
+            <!-- COLUMN 1: UPLOAD VIDEO -->
+            <div class="workspace-card upload-video-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                  <span>Upload Video</span>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <!-- Dropzone -->
+                <div class="drop-zone" id="videoDropZone">
+                  <input type="file" id="videoFileInput" accept=".mp4,.avi,.mov,.mkv,.webm" class="file-input-hidden">
+                  
+                  <div class="drop-zone-content" id="videoDropPrompt">
+                    <div class="upload-video-icon-box">
+                      <i class="fa-solid fa-video"></i>
+                    </div>
+                    <p class="drop-main-text"><strong>Drag & drop a video here</strong></p>
+                    <p class="drop-sub-text">or click to browse</p>
+                    
+                    <button type="button" class="btn btn-primary choose-video-btn" id="chooseVideoBtn">
+                      <i class="fa-regular fa-folder-open"></i> Choose Video
+                    </button>
+                  </div>
+                </div>
+
+                <div class="upload-hints">
+                  <p>Supported: <strong>MP4, AVI, MOV</strong></p>
+                  <p>Max size: <strong>500 MB</strong></p>
+                </div>
+
+                <!-- Staged Video File Info Card (with Thumbnail & Trash icon) -->
+                <div class="staged-video-pill-card" id="stagedVideoPillCard" style="display: none;">
+                  <div class="staged-video-thumb">
+                    <img src="" id="stagedVideoThumbImg" alt="Video Thumbnail">
+                    <i class="fa-solid fa-play thumb-play-icon"></i>
+                  </div>
+                  <div class="staged-video-details">
+                    <strong class="staged-filename" id="stagedVideoName">—</strong>
+                    <span class="staged-meta-text" id="stagedVideoMeta">—</span>
+                  </div>
+                  <button type="button" class="btn-trash-staged" id="btnRemoveStagedVideo" title="Remove video">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                </div>
+
+                <!-- Quick Load Sample Button -->
+                <div class="sample-image-box" style="margin-top: 10px;">
+                  <button type="button" class="btn btn-sample" id="loadSampleVideoBtn">
+                    <i class="fa-solid fa-bolt"></i> Load Sample: factory_shift.mp4
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- COLUMN 2: VIDEO ANALYSIS (Center Player) -->
+            <div class="workspace-card video-analysis-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-video"></i>
+                  <span>Video Analysis</span>
+                </div>
+                <div class="status-pill-completed" id="videoAnalysisStatusPill" style="display: none;">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Processing Completed</span>
+                </div>
+              </div>
+
+              <div class="card-body video-player-body">
+                <div class="video-player-container" id="videoPlayerContainer">
+                  <!-- HTML5 Video Player with Bounding Boxes -->
+                  <video id="mainSurveillanceVideo" playsinline preload="auto"></video>
+                  <canvas id="videoCanvasOverlay"></canvas>
+
+                  <!-- Video Processing Scanner Overlay -->
+                  <div class="processing-overlay" id="videoProcessingOverlay" style="display: none;">
+                    <div class="scanner-line"></div>
+                    <div class="spinner-box">
+                      <i class="fa-solid fa-gear fa-spin"></i>
+                      <span id="videoProcessingText">Processing Video Frames with YOLO...</span>
+                      <div class="progress-bar-track" style="width: 200px; margin-top: 8px;">
+                        <div class="progress-bar-fill" id="overlayProgressFill" style="width: 0%;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Custom Video Controls Bar -->
+                <div class="custom-video-controls">
+                  <button type="button" class="ctrl-btn" id="ctrlPlayPause" title="Play/Pause">
+                    <i class="fa-solid fa-play"></i>
+                  </button>
+                  <button type="button" class="ctrl-btn" id="ctrlStop" title="Stop">
+                    <i class="fa-solid fa-stop"></i>
+                  </button>
+                  <span class="video-timer" id="videoTimer">00:00:00 / 00:00:00</span>
+                  
+                  <div class="video-scrubber-track" id="videoScrubber">
+                    <div class="video-scrubber-fill" id="scrubberFill" style="width: 0%;"></div>
+                  </div>
+
+                  <button type="button" class="ctrl-btn" id="ctrlVolume" title="Mute/Unmute">
+                    <i class="fa-solid fa-volume-high"></i>
+                  </button>
+                  <button type="button" class="ctrl-btn" id="ctrlFullscreen" title="Fullscreen">
+                    <i class="fa-solid fa-expand"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- COLUMN 3: RIGHT SIDEBAR (Detection Summary & Processing Details) -->
+            <div class="video-stats-column">
+              
+              <!-- Card A: Detection Summary -->
+              <div class="workspace-card detection-summary-card">
+                <div class="card-header">
+                  <div class="card-header-title">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>Detection Summary</span>
+                  </div>
+                </div>
+                <div class="card-body" style="padding: 14px 18px;">
+                  <ul class="summary-classes-list">
+                    <li class="summary-class-item">
+                      <div class="class-left">
+                        <i class="fa-solid fa-helmet-safety text-emerald"></i>
+                        <span>Helmet</span>
+                      </div>
+                      <strong class="class-count" id="countHelmet">0</strong>
+                    </li>
+                    <li class="summary-class-item">
+                      <div class="class-left">
+                        <i class="fa-solid fa-vest text-purple"></i>
+                        <span>Vest</span>
+                      </div>
+                      <strong class="class-count" id="countVest">0</strong>
+                    </li>
+                    <li class="summary-class-item">
+                      <div class="class-left">
+                        <i class="fa-solid fa-mitten text-amber"></i>
+                        <span>Gloves</span>
+                      </div>
+                      <strong class="class-count" id="countGloves">0</strong>
+                    </li>
+                    <li class="summary-class-item">
+                      <div class="class-left">
+                        <i class="fa-solid fa-glasses text-blue"></i>
+                        <span>Goggles</span>
+                      </div>
+                      <strong class="class-count" id="countGoggles">0</strong>
+                    </li>
+                    <li class="summary-class-item">
+                      <div class="class-left">
+                        <i class="fa-solid fa-shoe-prints text-cyan"></i>
+                        <span>Boots</span>
+                      </div>
+                      <strong class="class-count" id="countBoots">0</strong>
+                    </li>
+                    <li class="summary-class-item violation-item">
+                      <div class="class-left">
+                        <i class="fa-solid fa-triangle-exclamation text-red"></i>
+                        <span class="text-red font-semibold">Violations (no-*)</span>
+                      </div>
+                      <strong class="class-count text-red" id="countViolations">0</strong>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Card B: Processing Details -->
+              <div class="workspace-card processing-details-card">
+                <div class="card-header">
+                  <div class="card-header-title">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Processing Details</span>
+                  </div>
+                </div>
+                <div class="card-body" style="padding: 14px 18px;">
+                  <div class="details-row">
+                    <span class="detail-name">Total Frames</span>
+                    <span class="detail-dots">:</span>
+                    <strong class="detail-val" id="detailTotalFrames">—</strong>
+                  </div>
+                  <div class="details-row">
+                    <span class="detail-name">Frames Processed</span>
+                    <span class="detail-dots">:</span>
+                    <strong class="detail-val" id="detailFramesProcessed">—</strong>
+                  </div>
+                  <div class="details-row">
+                    <span class="detail-name">Processing FPS</span>
+                    <span class="detail-dots">:</span>
+                    <strong class="detail-val" id="detailProcessingFps">—</strong>
+                  </div>
+                  <div class="details-row">
+                    <span class="detail-name">Total Violations</span>
+                    <span class="detail-dots">:</span>
+                    <strong class="detail-val text-red" id="detailTotalViolations">—</strong>
+                  </div>
+                  <div class="details-row">
+                    <span class="detail-name">Processing Time</span>
+                    <span class="detail-dots">:</span>
+                    <strong class="detail-val" id="detailProcessingTime">—</strong>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Lower Row: Detection Timeline (Violations Table) -->
+          <div class="workspace-card timeline-card" style="margin-top: 20px;">
+            <div class="card-header">
+              <div class="card-header-title">
+                <i class="fa-regular fa-clock"></i>
+                <span>Detection Timeline (Violations)</span>
+              </div>
+            </div>
+
+            <div class="card-body" style="padding: 0;">
+              <div class="table-responsive">
+                <table class="timeline-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 45px;">#</th>
+                      <th>Timestamp</th>
+                      <th>Violation Detected</th>
+                      <th>Confidence</th>
+                      <th>Severity</th>
+                      <th style="text-align: center;">Evidence</th>
+                    </tr>
+                  </thead>
+                  <tbody id="timelineTableBody">
+                    <tr><td colspan="6" class="text-center text-muted" style="padding: 24px;">No safety violations detected yet. Upload and analyze a video to inspect incident timestamps.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons Bar (Exact match to reference design) -->
+          <div class="action-buttons-bar" style="margin-top: 20px;">
+            <div class="action-left">
+              <button type="button" class="btn btn-action-primary" id="btnAnalyzeVideo">
+                <i class="fa-solid fa-play"></i>
+                <span>Analyze Video</span>
+              </button>
+
+              <button type="button" class="btn btn-action-secondary" id="btnDownloadVideoResult">
+                <i class="fa-solid fa-download"></i>
+                <span>Download Result</span>
+              </button>
+              
+              <button type="button" class="btn btn-action-ghost" id="btnClearVideo">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Clear</span>
+              </button>
+            </div>
+
+            <div class="action-right">
+              <div class="status-badge-green" id="analysisCompletedBadge" style="display: none;">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Analysis Completed</span>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW: LIVE MONITORING (WEBCAM & CCTV)          -->
+        <!-- ============================================== -->
+        <section class="view-section" id="view-live-monitoring">
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box" style="background: #fee2e2; color: #dc2626;">
+                <i class="fa-solid fa-tower-broadcast"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Live Camera Surveillance</h2>
+                <p class="page-description">
+                  Real-time webcam PPE monitoring with low-latency client rendering, automatic violation detection, and snapshot capture.
+                </p>
+              </div>
+            </div>
+            <div class="phase-pill-banner">
+              <span class="pill-tag" style="background: #dc2626;">Live Stream</span>
+              <span class="pill-text">Surveillance Active</span>
+            </div>
+          </div>
+
+          <!-- Live Top Metrics -->
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-circle-icon icon-circle-orange">
+                <i class="fa-solid fa-circle-dot" id="livePulseIcon"></i>
+              </div>
+              <div class="metric-info">
+                <span class="metric-label">Camera Status</span>
+                <span class="metric-value" id="liveCameraStatus">Offline</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-circle-icon icon-circle-blue">
+                <i class="fa-solid fa-gauge-high"></i>
+              </div>
+              <div class="metric-info">
+                <span class="metric-label">Feed Latency</span>
+                <span class="metric-value" id="liveFeedFps">0 FPS</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-circle-icon icon-circle-green">
+                <i class="fa-solid fa-crosshairs"></i>
+              </div>
+              <div class="metric-info">
+                <span class="metric-label">Current Frame Detections</span>
+                <span class="metric-value" id="liveCurrentDetections">0</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-circle-icon icon-circle-purple">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div class="metric-info">
+                <span class="metric-label">Live Violations Triggered</span>
+                <span class="metric-value" id="liveViolationsCount" style="color: #ef4444;">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Workspace (2 Columns) -->
+          <div class="live-workspace-grid">
+            <div class="workspace-card live-viewport-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-camera"></i>
+                  <span>Surveillance Feed Viewport</span>
+                </div>
+                <div class="live-indicator-pill" id="liveIndicatorPill" style="display: none;">
+                  <span class="live-blink-dot"></span> LIVE MONITORING
+                </div>
+              </div>
+
+              <div class="card-body live-viewport-body">
+                <div class="live-stream-container" id="liveStreamContainer">
+                  <video id="webcamVideo" autoplay playsinline muted></video>
+                  <canvas id="webcamCanvasOverlay"></canvas>
+                  <canvas id="offscreenCanvas" style="display: none;"></canvas>
+
+                  <div class="live-offline-overlay" id="liveOfflineOverlay">
+                    <div class="offline-icon-box">
+                      <i class="fa-solid fa-video-slash"></i>
+                    </div>
+                    <h3>Camera Stream Inactive</h3>
+                    <p>Click <strong>Start Camera</strong> below to enable your webcam and initiate real-time PPE surveillance.</p>
+                  </div>
+                </div>
+
+                <div class="live-controls-bar">
+                  <button type="button" class="btn btn-action-primary" id="btnStartCamera" style="background: #10b981;">
+                    <i class="fa-solid fa-play"></i> Start Camera
+                  </button>
+                  <button type="button" class="btn btn-action-ghost" id="btnStopCamera" disabled style="color: #ef4444;">
+                    <i class="fa-solid fa-stop"></i> Stop Camera
+                  </button>
+                  <button type="button" class="btn btn-action-ghost" id="btnPauseCameraStream" disabled>
+                    <i class="fa-solid fa-pause"></i> Pause Inference
+                  </button>
+                  
+                  <div class="source-selector-wrapper">
+                    <label for="cameraSourceSelect"><i class="fa-solid fa-video"></i> Source:</label>
+                    <select id="cameraSourceSelect" class="form-select-sm">
+                      <option value="webcam" selected>Default User Webcam</option>
+                      <option value="rtsp" disabled>CCTV RTSP Stream (Phase 3)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="workspace-card live-alerts-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-bell"></i>
+                  <span>Real-Time Incident Stream</span>
+                </div>
+                <button class="btn btn-outline btn-refresh" id="btnClearLiveAlerts" style="padding: 4px 8px; font-size: 0.75rem;">
+                  Clear Feed
+                </button>
+              </div>
+
+              <div class="card-body">
+                <div class="latest-evidence-box">
+                  <span class="evidence-box-label">LATEST VIOLATION SNAPSHOT:</span>
+                  <div class="evidence-thumb-container" id="liveLatestEvidenceContainer">
+                    <div class="empty-evidence-placeholder">
+                      <i class="fa-solid fa-shield-heart"></i>
+                      <span>No active safety violations detected in live feed.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="live-alerts-scroll" id="liveAlertsScroll"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW: ALERTS & INCIDENT HISTORY                -->
+        <!-- ============================================== -->
+        <section class="view-section" id="view-alerts">
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box" style="background: #fef2f2; color: #ef4444;">
+                <i class="fa-solid fa-bell"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Safety Alerts & Incident History</h2>
+                <p class="page-description">
+                  Permanent incident audit log of safety violations detected across image, video, and live surveillance streams.
+                </p>
+              </div>
+            </div>
+            <button class="btn btn-outline" id="btnRefreshAlerts">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh Incidents
+            </button>
+          </div>
+
+          <!-- Incidents Statistics KPIs -->
+          <div class="metrics-grid">
+            <div class="metric-card card-purple-icon">
+              <div class="metric-circle-icon icon-circle-purple"><i class="fa-solid fa-clipboard-list"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Total Incidents</span>
+                <span class="metric-value" id="alertStatTotal">0</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-orange-icon">
+              <div class="metric-circle-icon icon-circle-orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Critical Violations</span>
+                <span class="metric-value text-red" id="alertStatCritical">0</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-blue-icon">
+              <div class="metric-circle-icon icon-circle-blue"><i class="fa-solid fa-shield-halved"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">High Priority</span>
+                <span class="metric-value" id="alertStatHigh">0</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-green-icon">
+              <div class="metric-circle-icon icon-circle-green"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Unacknowledged</span>
+                <span class="metric-value" id="alertStatUnack">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Incidents Table Card -->
+          <div class="workspace-card" style="margin-top: 10px;">
+            <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+              <div class="card-header-title">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Incident Records</span>
+              </div>
+
+              <div class="alerts-filters-toolbar">
+                <select id="filterSeverity" class="form-select-sm">
+                  <option value="ALL">All Severities</option>
+                  <option value="CRITICAL">Critical Only</option>
+                  <option value="HIGH">High Only</option>
+                  <option value="MEDIUM">Medium Only</option>
+                </select>
+
+                <select id="filterStatus" class="form-select-sm">
+                  <option value="ALL">All Statuses</option>
+                  <option value="NEW">New Only</option>
+                  <option value="ACKNOWLEDGED">Acknowledged</option>
+                  <option value="DISMISSED">Dismissed</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="detection-table" id="incidentsMasterTable">
+                  <thead>
+                    <tr>
+                      <th>Incident ID</th>
+                      <th>Severity</th>
+                      <th>Violation Category</th>
+                      <th>Confidence</th>
+                      <th>Source</th>
+                      <th>Timestamp</th>
+                      <th>Evidence</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="incidentsMasterTableBody">
+                    <tr><td colspan="9" class="text-center text-muted">Loading incident audit logs...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW: DASHBOARD (OVERVIEW)                     -->
+        <!-- ============================================== -->
+        <section class="view-section" id="view-dashboard">
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box">
+                <i class="fa-solid fa-table-columns"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Executive Dashboard</h2>
+                <p class="page-description">
+                  Real-time status of the AI Industrial Safety Surveillance System and PPE compliance monitor.
+                </p>
+              </div>
+            </div>
+            <div class="phase-pill-banner">
+              <span class="pill-tag">Phase 2 Surveillance</span>
+              <span class="pill-text">Operational</span>
+            </div>
+          </div>
+
+          <div class="dashboard-kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon-badge kpi-emerald"><i class="fa-solid fa-heart-pulse"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-subtitle">SYSTEM STATUS</span>
+                <h3 class="kpi-title" id="dashHealthStatus">Operational</h3>
+                <span class="kpi-tag text-emerald"><i class="fa-solid fa-circle-check"></i> FastAPI Backend Live</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-badge kpi-indigo"><i class="fa-solid fa-microchip"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-subtitle">ACTIVE AI MODEL</span>
+                <h3 class="kpi-title" id="dashModelName">YOLO (best.pt)</h3>
+                <span class="kpi-tag text-indigo"><i class="fa-solid fa-shield"></i> Loaded In-Memory</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-badge kpi-purple"><i class="fa-solid fa-tags"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-subtitle">DETECTABLE CLASSES</span>
+                <h3 class="kpi-title" id="dashTotalClasses">10 Classes</h3>
+                <span class="kpi-tag text-purple"><i class="fa-solid fa-helmet-safety"></i> PPE & Violations</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-badge kpi-amber"><i class="fa-solid fa-bolt"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-subtitle">INFERENCE HARDWARE</span>
+                <h3 class="kpi-title" id="dashDeviceName">CPU (Optimized)</h3>
+                <span class="kpi-tag text-amber"><i class="fa-solid fa-microchip"></i> PyTorch CPU Runtime</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-two-col">
+            <div class="dash-panel">
+              <div class="panel-header">
+                <h3><i class="fa-solid fa-list-check"></i> Trained Model Class Inventory</h3>
+                <span class="badge-count">10 Detected Categories</span>
+              </div>
+              <p class="panel-desc">Classes identified directly from the checkpoint weights inside <code>best.pt</code>:</p>
+              
+              <div class="class-chips-container" id="dashClassChips"></div>
+
+              <div class="compliance-legend">
+                <div class="legend-item"><span class="legend-dot compliant"></span> Compliant PPE (Helmet, Vest, Gloves, Boots, Goggles)</div>
+                <div class="legend-item"><span class="legend-dot violation"></span> Safety Violation (No-Helmet, No-Vest, No-Gloves, No-Boots, No-Goggles)</div>
+              </div>
+            </div>
+
+            <div class="dash-panel">
+              <div class="panel-header">
+                <h3><i class="fa-solid fa-circle-check"></i> Surveillance System Modules</h3>
+                <span class="badge-active">Phase 2 Online</span>
+              </div>
+
+              <ul class="milestone-list">
+                <li class="milestone-item completed">
+                  <div class="milestone-check"><i class="fa-solid fa-check"></i></div>
+                  <div class="milestone-info">
+                    <strong>Image Detection Engine</strong>
+                    <p>Instant PPE compliance validation and bounding box rendering on uploaded images.</p>
+                  </div>
+                </li>
+                <li class="milestone-item completed">
+                  <div class="milestone-check"><i class="fa-solid fa-check"></i></div>
+                  <div class="milestone-info">
+                    <strong>Asynchronous Video Surveillance</strong>
+                    <p>CPU frame-sampling video analysis with MP4 export and incident extraction.</p>
+                  </div>
+                </li>
+                <li class="milestone-item completed">
+                  <div class="milestone-check"><i class="fa-solid fa-check"></i></div>
+                  <div class="milestone-info">
+                    <strong>Live Camera & Automatic Alerts</strong>
+                    <p>Browser camera feed with real-time bounding boxes and SQLite evidence capture.</p>
+                  </div>
+                </li>
+              </ul>
+
+              <div class="quick-action-btns" style="flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" onclick="navigateTo('video-detection')">
+                  <i class="fa-solid fa-video"></i> Video Detection
+                </button>
+                <button type="button" class="btn btn-primary" onclick="navigateTo('live-monitoring')" style="background: #dc2626;">
+                  <i class="fa-solid fa-tower-broadcast"></i> Live Monitoring
+                </button>
+                <button type="button" class="btn btn-outline" onclick="navigateTo('alerts')">
+                  <i class="fa-solid fa-bell"></i> View Alerts
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW: MODEL INFORMATION PAGE                   -->
+        <!-- ============================================== -->
+        <section class="view-section" id="view-model-info">
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box">
+                <i class="fa-solid fa-microchip"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Model Information & Specifications</h2>
+                <p class="page-description">
+                  Technical specifications, checkpoint metadata, and class configurations for <code>best.pt</code>.
+                </p>
+              </div>
+            </div>
+            <button class="btn btn-outline btn-refresh" id="btnRefreshModelInfo">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh State
+            </button>
+          </div>
+
+          <div class="specs-grid">
+            <div class="spec-card">
+              <span class="spec-label">MODEL CHECKPOINT FILE</span>
+              <h4 class="spec-value" id="specModelName">best.pt</h4>
+              <p class="spec-sub text-muted" id="specModelPath">se_project/models/best.pt</p>
+            </div>
+
+            <div class="spec-card">
+              <span class="spec-label">FRAMEWORK & ARCHITECTURE</span>
+              <h4 class="spec-value" id="specArchitecture">YOLO (DetectionModel)</h4>
+              <p class="spec-sub text-muted">Ultralytics PyTorch Engine</p>
+            </div>
+
+            <div class="spec-card">
+              <span class="spec-label">INFERENCE RUNTIME DEVICE</span>
+              <h4 class="spec-value" id="specDevice">CPU (Optimized)</h4>
+              <p class="spec-sub text-muted">Low-Latency Single Socket Inference</p>
+            </div>
+
+            <div class="spec-card">
+              <span class="spec-label">ACTIVE STATUS</span>
+              <h4 class="spec-value text-emerald" id="specStatus">Ready & Loaded</h4>
+              <p class="spec-sub text-muted">In-Memory Preloaded Instance</p>
+            </div>
+          </div>
+
+          <div class="specs-table-card">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-tags"></i> Registered Model Detection Classes (Index 0 - 9)</h3>
+              <span class="badge-active">Extracted from best.pt</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="specs-table">
+                <thead>
+                  <tr>
+                    <th>Class ID</th>
+                    <th>Class Name</th>
+                    <th>Classification Category</th>
+                    <th>Color Code</th>
+                    <th>Industrial Purpose</th>
+                  </tr>
+                </thead>
+                <tbody id="specsClassesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="specs-control-card">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-sliders"></i> Inference Confidence Threshold</h3>
+              <span class="threshold-badge" id="thresholdValueBadge">0.25 (25%)</span>
+            </div>
+            <p class="panel-desc">Control minimum detection certainty threshold before bounding boxes are rendered:</p>
+            <div class="slider-control-row">
+              <span class="slider-min">0.05</span>
+              <input type="range" min="0.05" max="0.95" step="0.05" value="0.25" class="confidence-slider" id="confSlider">
+              <span class="slider-max">0.95</span>
+            </div>
+          </div>
+        <!-- ============================================== -->
+        <!-- VIEW: ADVANCED ANALYTICS DASHBOARD (PHASE 3)   -->
+        <!-- ============================================== -->
+        <section class="view-section" id="view-analytics">
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box" style="background: #eef2ff; color: #4f46e5;">
+                <i class="fa-solid fa-chart-line"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Safety Analytics & Compliance Intelligence</h2>
+                <p class="page-description">
+                  Real-time business intelligence, compliance ratios, category breakdowns, and temporal incident trends.
+                </p>
+              </div>
+            </div>
+            <div class="filter-actions-top">
+              <button class="btn btn-primary" onclick="navigateTo('reports')">
+                <i class="fa-regular fa-file-lines"></i> Export Reports
+              </button>
+              <button class="btn btn-outline" id="btnRefreshAnalytics">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh Analytics
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Analytics Filters Toolbar -->
+          <div class="analytics-filters-card">
+            <div class="filters-row-top">
+              <span class="filters-label"><i class="fa-solid fa-filter"></i> Time Range:</span>
+              <div class="range-pill-group">
+                <button type="button" class="range-pill" data-range="today">Today</button>
+                <button type="button" class="range-pill" data-range="7d">Last 7 Days</button>
+                <button type="button" class="range-pill active" data-range="30d">Last 30 Days</button>
+                <button type="button" class="range-pill" data-range="90d">Last 90 Days</button>
+                <button type="button" class="range-pill" data-range="all">All Time</button>
+              </div>
+            </div>
+
+            <div class="filters-row-controls">
+              <div class="filter-field">
+                <label for="analyticsStartDate">From:</label>
+                <input type="date" id="analyticsStartDate" class="form-input-sm">
+              </div>
+
+              <div class="filter-field">
+                <label for="analyticsEndDate">To:</label>
+                <input type="date" id="analyticsEndDate" class="form-input-sm">
+              </div>
+
+              <div class="filter-field">
+                <label for="analyticsCategory">PPE Category:</label>
+                <select id="analyticsCategory" class="form-select-sm">
+                  <option value="ALL">All Categories</option>
+                  <option value="helmet">Helmet (Hard Hat)</option>
+                  <option value="vest">Safety Vest</option>
+                  <option value="gloves">Safety Gloves</option>
+                  <option value="goggles">Eye Goggles</option>
+                  <option value="boots">Safety Boots</option>
+                </select>
+              </div>
+
+              <div class="filter-field">
+                <label for="analyticsSeverity">Severity:</label>
+                <select id="analyticsSeverity" class="form-select-sm">
+                  <option value="ALL">All Severities</option>
+                  <option value="CRITICAL">Critical</option>
+                  <option value="HIGH">High</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="LOW">Low</option>
+                </select>
+              </div>
+
+              <div class="filter-field">
+                <label for="analyticsSource">Source:</label>
+                <select id="analyticsSource" class="form-select-sm">
+                  <option value="ALL">All Sources</option>
+                  <option value="image_upload">Image Upload</option>
+                  <option value="video_detection">Video Detection</option>
+                  <option value="live_webcam">Live Webcam</option>
+                  <option value="cctv_stream">CCTV Stream</option>
+                </select>
+              </div>
+
+              <div class="filter-buttons">
+                <button type="button" class="btn btn-primary btn-sm" id="btnApplyAnalyticsFilters">
+                  <i class="fa-solid fa-check"></i> Apply
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" id="btnResetAnalyticsFilters">
+                  <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 Dynamic KPI Cards -->
+          <div class="analytics-kpi-grid">
+            <div class="metric-card card-purple-icon">
+              <div class="metric-circle-icon icon-circle-purple"><i class="fa-solid fa-clipboard-list"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Total Incidents</span>
+                <span class="metric-value" id="kpiTotalIncidents">0</span>
+                <span class="metric-subtext">Logged in period</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-orange-icon">
+              <div class="metric-circle-icon icon-circle-orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Total Violations</span>
+                <span class="metric-value text-red" id="kpiTotalViolations">0</span>
+                <span class="metric-subtext">Detected non-compliance</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-blue-icon">
+              <div class="metric-circle-icon icon-circle-blue"><i class="fa-solid fa-shield-halved"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Compliant PPE Items</span>
+                <span class="metric-value text-emerald" id="kpiCompliantDetections">0</span>
+                <span class="metric-subtext">Verified safe gear</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-green-icon">
+              <div class="metric-circle-icon icon-circle-green"><i class="fa-solid fa-percent"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Compliance Rate</span>
+                <div class="compliance-rate-box">
+                  <span class="metric-value" id="kpiComplianceRate">--%</span>
+                  <span class="compliance-badge" id="kpiComplianceBadge">Safe</span>
+                </div>
+                <span class="metric-subtext" id="kpiComplianceSubtext">Compliant / Total PPE</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-red-icon">
+              <div class="metric-circle-icon icon-circle-red"><i class="fa-solid fa-circle-exclamation"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Critical Incidents</span>
+                <span class="metric-value text-red" id="kpiCriticalIncidents">0</span>
+                <span class="metric-subtext">No Helmet / No Vest</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-teal-icon">
+              <div class="metric-circle-icon icon-circle-teal"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Resolved Incidents</span>
+                <span class="metric-value text-emerald" id="kpiResolvedIncidents">0</span>
+                <span class="metric-subtext">Signed off by safety team</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formula Explainer Banner -->
+          <div class="compliance-formula-banner">
+            <div class="formula-icon"><i class="fa-solid fa-calculator"></i></div>
+            <div class="formula-text">
+              <strong>Official Compliance Rate Formula:</strong>
+              <code>Compliance Rate (%) = (Compliant PPE Detections / Total PPE Detections) &times; 100</code>
+              <span class="formula-note">Where Compliant = [boots, gloves, goggles, helmet, vest] and Total = Compliant + Violations. Evaluated across all monitored image, video, and live frames.</span>
+            </div>
+          </div>
+
+          <!-- 4 Interactive Charts Grid -->
+          <div class="analytics-charts-grid">
+            <!-- Chart 1: Violations by Category -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-title">
+                  <i class="fa-solid fa-chart-column"></i>
+                  <span>PPE Violations by Category</span>
+                </div>
+                <span class="chart-subtitle">Frequency per PPE equipment type</span>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="chartViolationsByCategory"></canvas>
+              </div>
+            </div>
+
+            <!-- Chart 2: Incident Trends Over Time -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-title">
+                  <i class="fa-solid fa-chart-area"></i>
+                  <span>Incident Trends Over Time</span>
+                </div>
+                <span class="chart-subtitle">Daily & weekly incident progression</span>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="chartIncidentsTrend"></canvas>
+              </div>
+            </div>
+
+            <!-- Chart 3: Severity Distribution -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-title">
+                  <i class="fa-solid fa-chart-pie"></i>
+                  <span>Severity Distribution</span>
+                </div>
+                <span class="chart-subtitle">Critical vs High vs Medium vs Low</span>
+              </div>
+              <div class="chart-canvas-container chart-doughnut-container">
+                <canvas id="chartSeverityDist"></canvas>
+              </div>
+            </div>
+
+            <!-- Chart 4: Detection Source Distribution -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-title">
+                  <i class="fa-solid fa-tower-broadcast"></i>
+                  <span>Detection Source Distribution</span>
+                </div>
+                <span class="chart-subtitle">Image upload vs Video vs Webcam vs CCTV</span>
+              </div>
+              <div class="chart-canvas-container chart-doughnut-container">
+                <canvas id="chartSourceDist"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW: INCIDENT HISTORY & MANAGEMENT (PHASE 3)  -->
+        <!-- ============================================== -->
+        <section class="view-section" id="view-incident-history">
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box" style="background: #fdf2f8; color: #db2777;">
+                <i class="fa-solid fa-clipboard-list"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Incident History & Resolution Management</h2>
+                <p class="page-description">
+                  Audit, filter, inspect evidence snapshots, and execute safety resolution workflows with supervisor notes.
+                </p>
+              </div>
+            </div>
+            <div class="filter-actions-top">
+              <button class="btn btn-outline" id="btnExportIncidentsCsv">
+                <i class="fa-solid fa-file-csv"></i> Export Filtered CSV
+              </button>
+              <button class="btn btn-primary" onclick="navigateTo('reports')">
+                <i class="fa-solid fa-file-pdf"></i> Generate PDF Audit
+              </button>
+            </div>
+          </div>
+
+          <!-- Incidents Filter & Search Bar -->
+          <div class="workspace-card incident-filter-card">
+            <div class="incident-search-row">
+              <div class="search-input-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="incidentSearchInput" placeholder="Search by Incident ID, Violation class, or notes...">
+              </div>
+
+              <div class="incident-filter-selects">
+                <select id="incidentFilterCategory" class="form-select-sm">
+                  <option value="ALL">All Categories</option>
+                  <option value="helmet">Helmet</option>
+                  <option value="vest">Vest</option>
+                  <option value="gloves">Gloves</option>
+                  <option value="goggles">Goggles</option>
+                  <option value="boots">Boots</option>
+                </select>
+
+                <select id="incidentFilterSeverity" class="form-select-sm">
+                  <option value="ALL">All Severities</option>
+                  <option value="CRITICAL">Critical</option>
+                  <option value="HIGH">High</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="LOW">Low</option>
+                </select>
+
+                <select id="incidentFilterSource" class="form-select-sm">
+                  <option value="ALL">All Sources</option>
+                  <option value="image_upload">Image</option>
+                  <option value="video_detection">Video</option>
+                  <option value="live_webcam">Webcam</option>
+                  <option value="cctv_stream">CCTV</option>
+                </select>
+
+                <select id="incidentFilterStatus" class="form-select-sm">
+                  <option value="ALL">All Statuses</option>
+                  <option value="NEW">New (Pending)</option>
+                  <option value="ACKNOWLEDGED">Acknowledged</option>
+                  <option value="RESOLVED">Resolved</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="incident-date-row">
+              <div class="date-pickers-left">
+                <label>Date From: <input type="date" id="incidentStartDate" class="form-input-sm"></label>
+                <label>Date To: <input type="date" id="incidentEndDate" class="form-input-sm"></label>
+              </div>
+
+              <div class="filter-actions-right">
+                <button type="button" class="btn btn-primary btn-sm" id="btnFilterIncidents">
+                  <i class="fa-solid fa-filter"></i> Apply Filters
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" id="btnResetIncidentFilters">
+                  <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Incidents Management Table Card -->
+          <div class="workspace-card" style="margin-top: 14px;">
+            <div class="card-header">
+              <div class="card-header-title">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Safety Incident Audit Records</span>
+              </div>
+              <div class="table-counts-summary" id="incidentTableCountSummary">
+                Showing 0 of 0 records
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="detection-table" id="incidentsAuditTable">
+                  <thead>
+                    <tr>
+                      <th>Incident ID</th>
+                      <th>Violation Type</th>
+                      <th>Confidence</th>
+                      <th>Severity</th>
+                      <th>Source Stream</th>
+                      <th>Detection Timestamp</th>
+                      <th>Status</th>
+                      <th>Evidence</th>
+                      <th style="text-align: right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="incidentsAuditTableBody">
+                    <tr><td colspan="9" class="text-center text-muted" style="padding: 30px;">Loading incident records...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination Bar -->
+              <div class="pagination-bar" id="incidentPaginationBar">
+                <div class="page-size-selector">
+                  <label for="incidentPageSize">Rows per page:</label>
+                  <select id="incidentPageSize" class="form-select-sm">
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                  </select>
+                </div>
+
+                <div class="pagination-controls">
+                  <button type="button" class="btn btn-outline btn-sm" id="btnPrevPage" disabled>
+                    <i class="fa-solid fa-chevron-left"></i> Previous
+                  </button>
+                  <span class="page-indicator" id="pageIndicator">Page 1 of 1</span>
+                  <button type="button" class="btn btn-outline btn-sm" id="btnNextPage" disabled>
+                    Next <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW: PROFESSIONAL SAFETY REPORTS (PHASE 3)    -->
+        <!-- ============================================== -->
+        <section class="view-section" id="view-reports">
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box" style="background: #ecfdf5; color: #059669;">
+                <i class="fa-regular fa-file-lines"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Safety Reports & Formal Audit Export</h2>
+                <p class="page-description">
+                  Generate professional PDF compliance documents and CSV exports with executive KPI summaries, violation statistics, and supervisor sign-offs.
+                </p>
+              </div>
+            </div>
+            <button class="btn btn-outline" id="btnRefreshReportsHistory">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh History
+            </button>
+          </div>
+
+          <div class="reports-main-grid">
+            <!-- Left Card: Report Generation Form -->
+            <div class="workspace-card report-generator-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span>Report Configuration</span>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <form id="reportGenerationForm">
+                  <div class="form-group">
+                    <label class="form-label" for="reportTypeSelect">Report Type</label>
+                    <select id="reportTypeSelect" class="form-select">
+                      <option value="daily">Daily Safety Summary (Today)</option>
+                      <option value="weekly" selected>Weekly Safety Audit (Last 7 Days)</option>
+                      <option value="monthly">Monthly Compliance Review (Last 30 Days)</option>
+                      <option value="custom">Custom Date Range Audit</option>
+                      <option value="ppe_violation">PPE Category Specific Audit</option>
+                    </select>
+                  </div>
+
+                  <div class="form-row-two" id="reportCustomDateRow" style="margin-top: 12px;">
+                    <div class="form-group">
+                      <label class="form-label" for="reportStartDate">Start Date</label>
+                      <input type="date" id="reportStartDate" class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="reportEndDate">End Date</label>
+                      <input type="date" id="reportEndDate" class="form-input">
+                    </div>
+                  </div>
+
+                  <div class="form-row-two" style="margin-top: 12px;">
+                    <div class="form-group">
+                      <label class="form-label" for="reportSeveritySelect">Severity Filter</label>
+                      <select id="reportSeveritySelect" class="form-select">
+                        <option value="ALL">All Severities</option>
+                        <option value="CRITICAL">Critical Only</option>
+                        <option value="HIGH">High & Critical</option>
+                        <option value="MEDIUM">Medium & Above</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label" for="reportCategorySelect">PPE Category Filter</label>
+                      <select id="reportCategorySelect" class="form-select">
+                        <option value="ALL">All PPE Types</option>
+                        <option value="helmet">Helmet (Hard Hat)</option>
+                        <option value="vest">High-Visibility Vest</option>
+                        <option value="gloves">Protective Gloves</option>
+                        <option value="goggles">Safety Goggles</option>
+                        <option value="boots">Safety Boots</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-top: 16px;">
+                    <label class="form-label">Export Format</label>
+                    <div class="format-radio-group">
+                      <label class="format-radio-card active" id="formatCardPdf">
+                        <input type="radio" name="reportFormat" value="pdf" checked>
+                        <div class="format-card-content">
+                          <i class="fa-solid fa-file-pdf format-icon pdf-icon"></i>
+                          <div class="format-info">
+                            <strong>PDF Document</strong>
+                            <p>Formal industrial audit with tables, metrics & sign-off</p>
+                          </div>
+                        </div>
+                      </label>
+
+                      <label class="format-radio-card" id="formatCardCsv">
+                        <input type="radio" name="reportFormat" value="csv">
+                        <div class="format-card-content">
+                          <i class="fa-solid fa-file-csv format-icon csv-icon"></i>
+                          <div class="format-info">
+                            <strong>CSV Spreadsheet</strong>
+                            <p>Raw tabular data for Excel & PowerBI processing</p>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="form-actions" style="margin-top: 24px;">
+                    <button type="submit" class="btn btn-action-primary btn-generate-report" id="btnGenerateReport">
+                      <i class="fa-solid fa-file-arrow-down"></i>
+                      <span>Generate &amp; Download Report</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Right Card: Report History Table -->
+            <div class="workspace-card report-history-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                  <span>Generated Reports History</span>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="detection-table" id="reportsHistoryTable">
+                    <thead>
+                      <tr>
+                        <th>Report ID</th>
+                        <th>Type</th>
+                        <th>Format</th>
+                        <th>Incidents</th>
+                        <th>Date Range</th>
+                        <th>Generated</th>
+                        <th style="text-align: right;">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="reportsHistoryTableBody">
+                      <tr><td colspan="7" class="text-center text-muted" style="padding: 24px;">Loading reports history...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW: SYSTEM SETTINGS (PHASE 3)                -->
+        <!-- ============================================== -->
+        <section class="view-section" id="view-settings">
+          <div class="page-title-banner">
+            <div class="title-left">
+              <div class="title-icon-box" style="background: #f1f5f9; color: #475569;">
+                <i class="fa-solid fa-gear"></i>
+              </div>
+              <div class="title-headings">
+                <h2 class="page-title">Surveillance System Settings & Diagnostics</h2>
+                <p class="page-description">
+                  Configure model inference parameters, alert cooldown intervals, site identifiers, and inspect database diagnostics.
+                </p>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="btnSaveSystemSettings">
+              <i class="fa-solid fa-floppy-disk"></i> Save Settings
+            </button>
+          </div>
+
+          <div class="settings-main-grid">
+            <!-- Card 1: AI Model & Inference Parameters -->
+            <div class="workspace-card settings-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-microchip"></i>
+                  <span>AI Model &amp; Inference Parameters</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label" for="settingsConfThreshold">
+                    Detection Confidence Threshold: <strong id="settingsConfBadge">0.25 (25%)</strong>
+                  </label>
+                  <p class="form-hint">Minimum certainty threshold before bounding boxes and violation alerts are registered.</p>
+                  <input type="range" min="0.05" max="0.95" step="0.05" value="0.25" class="confidence-slider" id="settingsConfThreshold">
+                </div>
+
+                <div class="form-group" style="margin-top: 18px;">
+                  <label class="form-label" for="settingsFrameStride">Video Frame Sampling Stride</label>
+                  <p class="form-hint">Process 1 out of every N frames during asynchronous video surveillance (stride 3 = ~10 FPS inference on 30 FPS video).</p>
+                  <div class="input-with-unit">
+                    <input type="number" min="1" max="15" value="3" class="form-input" id="settingsFrameStride">
+                    <span class="input-unit">frames</span>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 18px;">
+                  <label class="form-label">Active Weights Checkpoint</label>
+                  <div class="readonly-pill-box">
+                    <i class="fa-solid fa-file-code"></i>
+                    <span>best.pt (PyTorch DetectionModel - 10 Classes)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Surveillance & Alert Rules -->
+            <div class="workspace-card settings-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-bell"></i>
+                  <span>Alert Rules &amp; Site Configuration</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label" for="settingsCooldown">Alert Notification Cooldown</label>
+                  <p class="form-hint">Cooldown period preventing duplicate audio and popup alerts for the same violation category.</p>
+                  <div class="input-with-unit">
+                    <input type="number" min="3" max="120" value="15" class="form-input" id="settingsCooldown">
+                    <span class="input-unit">seconds</span>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 18px;">
+                  <label class="form-label" for="settingsMinSeverity">Minimum Alert Severity Level</label>
+                  <p class="form-hint">Only trigger high-priority alerts and sound notifications for incidents meeting or exceeding this severity.</p>
+                  <select id="settingsMinSeverity" class="form-select">
+                    <option value="ALL">All Violations (Low, Medium, High, Critical)</option>
+                    <option value="MEDIUM" selected>Medium &amp; Above</option>
+                    <option value="HIGH">High &amp; Critical Only</option>
+                    <option value="CRITICAL">Critical Only (No-Helmet, No-Vest)</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 18px;">
+                  <label class="form-label" for="settingsFacilityName">Industrial Facility / Site Name</label>
+                  <p class="form-hint">Header location name printed on official exported PDF safety audit documents.</p>
+                  <input type="text" class="form-input" id="settingsFacilityName" value="Industrial Fabrication Plant - Surveillance Zone A">
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: Storage Diagnostics & System Health -->
+            <div class="workspace-card settings-card">
+              <div class="card-header">
+                <div class="card-header-title">
+                  <i class="fa-solid fa-server"></i>
+                  <span>Database &amp; Storage Diagnostics</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="diagnostics-list">
+                  <div class="diag-item">
+                    <span class="diag-label"><i class="fa-solid fa-database"></i> SQLite Database Size:</span>
+                    <strong class="diag-value" id="diagDbSize">Loading...</strong>
+                  </div>
+                  <div class="diag-item">
+                    <span class="diag-label"><i class="fa-solid fa-hard-drive"></i> Evidence Storage Size:</span>
+                    <strong class="diag-value" id="diagStorageSize">Loading...</strong>
+                  </div>
+                  <div class="diag-item">
+                    <span class="diag-label"><i class="fa-solid fa-triangle-exclamation"></i> Total Incidents Recorded:</span>
+                    <strong class="diag-value" id="diagTotalIncidents">Loading...</strong>
+                  </div>
+                  <div class="diag-item">
+                    <span class="diag-label"><i class="fa-solid fa-video"></i> Processed Surveillance Videos:</span>
+                    <strong class="diag-value" id="diagTotalVideos">Loading...</strong>
+                  </div>
+                  <div class="diag-item">
+                    <span class="diag-label"><i class="fa-regular fa-file-pdf"></i> Generated Audit Reports:</span>
+                    <strong class="diag-value" id="diagTotalReports">Loading...</strong>
+                  </div>
+                  <div class="diag-item">
+                    <span class="diag-label"><i class="fa-solid fa-circle-check text-emerald"></i> Backend Server Status:</span>
+                    <strong class="diag-value text-emerald">Online (FastAPI 0.115)</strong>
+                  </div>
+                </div>
+
+                <div class="settings-actions-box" style="margin-top: 20px;">
+                  <button type="button" class="btn btn-outline btn-sm" id="btnRefreshDiagnostics">
+                    <i class="fa-solid fa-arrows-rotate"></i> Refresh Storage Diagnostics
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- EVIDENCE IMAGE MODAL -->
+  <div class="modal-backdrop" id="evidenceModal" style="display: none;">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-image"></i> Incident Evidence Snapshot</h3>
+        <button class="modal-close" id="evidenceModalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="padding: 16px; text-align: center;">
+        <img id="evidenceModalImg" src="" alt="Evidence Image" style="max-width: 100%; max-height: 480px; border-radius: 8px; object-fit: contain;">
+        <div class="evidence-modal-meta" id="evidenceModalMeta" style="margin-top: 12px; font-size: 0.85rem; text-align: left; background: #f8fafc; padding: 10px; border-radius: 6px;"></div>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-primary" id="evidenceDownloadBtn" download><i class="fa-solid fa-download"></i> Download Evidence</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCIDENT RESOLUTION / DETAIL MODAL (PHASE 3) -->
+  <div class="modal-backdrop" id="incidentDetailModal" style="display: none;">
+    <div class="modal-card modal-lg" style="max-width: 820px;">
+      <div class="modal-header">
+        <div class="modal-title-with-pill">
+          <h3><i class="fa-solid fa-shield-halved"></i> Incident Details &amp; Resolution</h3>
+          <span class="incident-id-tag" id="modalIncidentIdBadge">#INC-0000</span>
+        </div>
+        <button class="modal-close" id="incidentDetailCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="incident-modal-grid">
+          <!-- Left: Evidence & Snapshot -->
+          <div class="modal-evidence-pane">
+            <div class="modal-img-container">
+              <img id="modalIncidentEvidenceImg" src="" alt="Violation Evidence" style="width: 100%; max-height: 320px; object-fit: contain; border-radius: 8px; background: #000;">
+            </div>
+            <div class="modal-evidence-actions" style="margin-top: 10px;">
+              <a href="#" class="btn btn-outline btn-sm" id="modalIncidentDownloadBtn" download>
+                <i class="fa-solid fa-download"></i> Download Snapshot
+              </a>
+            </div>
+          </div>
+
+          <!-- Right: Metadata & Resolution Form -->
+          <div class="modal-details-pane">
+            <div class="incident-meta-group">
+              <div class="meta-row">
+                <span class="meta-label">Violation:</span>
+                <strong class="meta-value text-red" id="modalIncidentViolation">—</strong>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Severity Level:</span>
+                <span class="severity-badge" id="modalIncidentSeverity">CRITICAL</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Confidence:</span>
+                <strong class="meta-value" id="modalIncidentConfidence">0.0%</strong>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Source Stream:</span>
+                <span class="meta-value" id="modalIncidentSource">Live Webcam</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Detected At:</span>
+                <span class="meta-value font-mono" id="modalIncidentTimestamp">—</span>
+              </div>
+            </div>
+
+            <!-- Resolution Workflow Box -->
+            <div class="resolution-workflow-box">
+              <h4 class="workflow-title"><i class="fa-solid fa-pen-to-square"></i> Supervisor Resolution Workflow</h4>
+              
+              <div class="form-group" style="margin-top: 10px;">
+                <label class="form-label" for="modalResolutionStatus">Update Incident Status:</label>
+                <select id="modalResolutionStatus" class="form-select">
+                  <option value="NEW">New (Active / Pending)</option>
+                  <option value="ACKNOWLEDGED">Acknowledged (Investigating)</option>
+                  <option value="RESOLVED">Resolved (Action Taken)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-top: 12px;">
+                <label class="form-label" for="modalResolutionNotes">Resolution Notes / Action Taken:</label>
+                <textarea id="modalResolutionNotes" class="form-textarea" rows="3" placeholder="Enter corrective safety actions taken, worker notifications, or verification remarks..."></textarea>
+              </div>
+
+              <div class="resolved-meta-info" id="modalResolvedMeta" style="display: none; margin-top: 10px; font-size: 0.78rem; color: #059669;">
+                <i class="fa-solid fa-circle-check"></i> Previously resolved on <span id="modalResolvedTime">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" id="modalIncidentCancelBtn">Close</button>
+        <button type="button" class="btn btn-primary" id="modalIncidentSaveBtn">
+          <i class="fa-solid fa-check"></i> Save Status &amp; Notes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYSTEM INFO MODAL -->
+  <div class="modal-backdrop" id="infoModal" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-shield-halved"></i> Industrial Safety AI Surveillance</h3>
+        <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>AI-Based Intelligent Industrial Safety Surveillance System (Phase 2)</strong></p>
+        <p>Automated video analysis, real-time live webcam surveillance, and safety violation evidence capture utilizing your pre-trained YOLO model (<code>best.pt</code>).</p>
+        <div class="modal-specs-list">
+          <div><strong>Model File:</strong> best.pt (31.8 MB)</div>
+          <div><strong>Classes Monitored:</strong> 10 (Boots, Gloves, Goggles, Helmet, Vest & Non-compliant counterparts)</div>
+          <div><strong>Surveillance Capabilities:</strong> Image Detection, Video Upload Processing, Live Camera Streaming</div>
+          <div><strong>Alert Engine:</strong> Multi-level Severity (Critical, High, Medium) with Cooldown Protection</div>
+          <div><strong>Audit Database:</strong> SQLite Incident Repository with Evidence Storage</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="modalOkBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="/js/script.js"></script>
+</body>
+</html>
