@@ -1,0 +1,31 @@
+# Exclude local envs, git history, tests, and duplicate root weights
+.git/
+.gitignore
+venv/
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+tests/
+
+# Keep models/best.pt, exclude duplicate root weights
+best.pt
+best (1).pt
+best (2).pt
+
+# Runtime generated data
+*.db
+*.sqlite
+*.sqlite3
+backend/data/
+backend/evidence/
+backend/reports/
+backend/results/
+backend/logs/
+*.log
+
+# Large media files
+*.mp4
+*.avi
+*.mov
