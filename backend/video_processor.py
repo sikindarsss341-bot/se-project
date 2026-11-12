@@ -20,8 +20,11 @@ MODEL_CLASSES = [
     "no-boots", "no-gloves", "no-goggles", "no-helmet", "no-vest"
 ]
 
+COMPLIANT_CLASSES = {"boots", "gloves", "goggles", "helmet", "vest"}
+VIOLATION_CLASSES = {"no-boots", "no-gloves", "no-goggles", "no-helmet", "no-vest"}
+
 def draw_fast_annotations_cv2(image_bgr: np.ndarray, detections: list) -> np.ndarray:
-    """High-performance native OpenCV annotation rendering without PIL overhead."""
+    """High-performance native OpenCV annotation rendering with ByteTrack ID labels."""
     if not detections:
         return image_bgr
     out_img = image_bgr.copy()
@@ -29,6 +32,7 @@ def draw_fast_annotations_cv2(image_bgr: np.ndarray, detections: list) -> np.nda
         bbox = det["bbox"]
         class_name = det["class_name"]
         conf = det["confidence"]
+        track_id = det.get("track_id")
         color = det.get("color", (79, 70, 229))  # RGB
         # Convert RGB to BGR for OpenCV
         bgr_color = (int(color[2]), int(color[1]), int(color[0]))
@@ -37,8 +41,12 @@ def draw_fast_annotations_cv2(image_bgr: np.ndarray, detections: list) -> np.nda
         # Draw bounding box
         cv2.rectangle(out_img, (x1, y1), (x2, y2), bgr_color, 2)
         
-        # Draw clean label banner
-        label = f"{class_name} {int(conf * 100)}%"
+        # Display ByteTrack unique ID when tracked
+        if track_id is not None:
+            label = f"#{track_id} {class_name} {int(conf * 100)}%"
+        else:
+            label = f"{class_name} {int(conf * 100)}%"
+
         (w, h), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
         bg_y1 = max(0, y1 - h - 6)
         cv2.rectangle(out_img, (x1, bg_y1), (x1 + w + 8, bg_y1 + h + 6), bgr_color, -1)
@@ -51,7 +59,7 @@ video_jobs: Dict[str, Any] = {}
 _jobs_lock = threading.Lock()
 
 class VideoJob:
-    def __init__(self, job_id: str, input_path: str, filename: str, conf_threshold: float = 0.25, frame_stride: int = 4):
+    def __init__(self, job_id: str, input_path: str, filename: str, conf_threshold: float = 0.15, frame_stride: int = 4):
         self.job_id = job_id
         self.input_path = input_path
         self.filename = filename
@@ -64,9 +72,18 @@ class VideoJob:
         self.total_frames = 0
         self.processing_fps = 0.0
         self.elapsed_time = 0.0
+
+        # Total Frame Detections (Raw frame detections across all frames)
         self.total_detections = 0
         self.total_violations = 0
         self.class_counts: Dict[str, int] = {c: 0 for c in MODEL_CLASSES}
+
+        # Unique Tracked Objects (ByteTrack tracking IDs)
+        self.unique_class_tracks: Dict[str, set] = {c: set() for c in MODEL_CLASSES}
+        self.all_unique_tracks: set = set()
+
+        # Violation Grouping & Incident Cooldown Map
+        self.active_violation_tracks: Dict[str, Dict[str, Any]] = {}
         self.violations_summary = []
         
         self.output_path = str(VIDEOS_DIR / f"annotated_{job_id}.mp4")
@@ -80,8 +97,17 @@ class VideoJob:
         self.thread: Optional[threading.Thread] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        # Calculate unique tracked counts per class
+        unique_counts = {c: len(self.unique_class_tracks[c]) for c in MODEL_CLASSES}
+        total_unique_compliant = sum(unique_counts[c] for c in COMPLIANT_CLASSES)
+        total_unique_violations = sum(unique_counts[c] for c in VIOLATION_CLASSES)
+        total_unique_objects = len(self.all_unique_tracks)
+
+        # Accurate compliance rate based on unique tracked entities
         compliance = None
-        if self.total_detections > 0:
+        if (total_unique_compliant + total_unique_violations) > 0:
+            compliance = round((total_unique_compliant / (total_unique_compliant + total_unique_violations)) * 100.0, 1)
+        elif self.total_detections > 0:
             compliance = round(max(0.0, min(100.0, ((self.total_detections - self.total_violations) / self.total_detections) * 100.0)), 1)
 
         return {
@@ -93,10 +119,29 @@ class VideoJob:
             "total_frames": self.total_frames,
             "processing_fps": round(self.processing_fps, 1),
             "elapsed_time": round(self.elapsed_time, 2),
+
+            # A. Total Frame Detections (across all processed frames)
             "total_detections": self.total_detections,
+            "total_frame_detections": self.total_detections,
             "total_violations": self.total_violations,
-            "compliance_rate": compliance,
+            "total_frame_violations": self.total_violations,
             "class_counts": self.class_counts,
+            "frame_class_counts": self.class_counts,
+
+            # B. Unique Tracked Objects (ByteTrack tracking IDs)
+            "tracking_enabled": True,
+            "total_unique_objects": total_unique_objects,
+            "unique_tracked_objects": total_unique_objects,
+            "total_unique_violations": total_unique_violations,
+            "unique_violations": total_unique_violations,
+            "unique_class_counts": unique_counts,
+            "unique_helmets": unique_counts.get("helmet", 0),
+            "unique_vests": unique_counts.get("vest", 0),
+            "unique_goggles": unique_counts.get("goggles", 0),
+            "unique_gloves": unique_counts.get("gloves", 0),
+            "unique_boots": unique_counts.get("boots", 0),
+
+            "compliance_rate": compliance,
             "violations_summary": self.violations_summary,
             "annotated_video_url": self.output_url if self.status == "completed" else None,
             "original_video_url": self.original_url,
@@ -179,69 +224,119 @@ class VideoJob:
                 seconds = int(frame_idx / orig_fps)
                 timestamp_str = f"{seconds // 60:02d}:{seconds % 60:02d}"
 
-                # Run inference on sampled frames (frame stride optimization)
+                # Run inference on sampled frames with ByteTrack tracking
                 if frame_idx % self.frame_stride == 1 or self.frame_stride == 1:
-                    # Run inference with optimised settings:
-                    # iou=0.45  : standard NMS, avoids merging adjacent PPE items
-                    # max_det=100: allow many workers per frame
-                    # imgsz=640  : model's native input resolution
-                    results = model.predict(
+                    # Execute ByteTrack tracking with frame persistence
+                    results = model.track(
                         source=frame,
+                        persist=True,
+                        tracker="bytetrack.yaml",
                         conf=self.conf_threshold,
                         iou=0.45,
                         imgsz=640,
                         device="cpu",
-                        verbose=False,
-                        agnostic_nms=False,
-                        max_det=100
+                        verbose=False
                     )
                     current_detections = []
                     
                     for r in results:
                         names = r.names
-                        for box in r.boxes:
-                            cls_id = int(box.cls[0].item())
-                            cls_name = names.get(cls_id, f"class_{cls_id}")
-                            conf = round(float(box.conf[0].item()), 2)
-                            coords = [int(v) for v in box.xyxy[0].tolist()]
+                        if r.boxes:
+                            for box in r.boxes:
+                                cls_id = int(box.cls[0].item())
+                                cls_name = names.get(cls_id, f"class_{cls_id}")
+                                conf = round(float(box.conf[0].item()), 2)
+                                coords = [int(v) for v in box.xyxy[0].tolist()]
+                                track_id = int(box.id[0].item()) if box.id is not None else None
 
-                            current_detections.append({
-                                "class_id": cls_id,
-                                "class_name": cls_name,
-                                "confidence": conf,
-                                "bbox": coords,
-                                "color": get_color_for_class(cls_name)
-                            })
-                            # Track detected class occurrence
-                            if cls_name in self.class_counts:
-                                self.class_counts[cls_name] += 1
-                            else:
-                                self.class_counts[cls_name] = 1
+                                current_detections.append({
+                                    "class_id": cls_id,
+                                    "class_name": cls_name,
+                                    "confidence": conf,
+                                    "track_id": track_id,
+                                    "bbox": coords,
+                                    "color": get_color_for_class(cls_name)
+                                })
+
+                                # 1. Track raw frame-level detection counts
+                                if cls_name in self.class_counts:
+                                    self.class_counts[cls_name] += 1
+                                else:
+                                    self.class_counts[cls_name] = 1
+
+                                # 2. Track unique ByteTrack entity IDs
+                                if track_id is not None:
+                                    self.unique_class_tracks.setdefault(cls_name, set()).add(track_id)
+                                    self.all_unique_tracks.add(track_id)
                     
                     last_detections = current_detections
                     self.total_detections += len(current_detections)
 
-                    # Check for violations and trigger incident alerts
+                    # 3. Check for violations and apply incident grouping logic
                     violations = [d for d in current_detections if d["class_name"] in VIOLATION_CLASSES]
                     if violations:
                         self.total_violations += len(violations)
-                        alert = check_and_generate_alerts(
-                            frame_bgr=frame,
-                            detections=current_detections,
-                            source=f"Video: {self.filename}",
-                            video_timestamp=timestamp_str
-                        )
-                        if alert:
-                            self.violations_summary.append({
-                                "incident_id": alert["incident_id"],
-                                "violation": alert["violation_category"],
-                                "confidence": alert["confidence"],
-                                "timestamp": timestamp_str,
-                                "severity": alert["severity"],
-                                "evidence_url": alert["evidence_path"]
-                            })
+                        
+                        # Separate newly discovered violations from continuously tracked ones
+                        new_violation_alerts = []
+                        for v in violations:
+                            v_name = v["class_name"]
+                            v_tid = v.get("track_id")
+                            # Grouping key: by violation class + track ID (or spatial cell if untracked)
+                            if v_tid is not None:
+                                vkey = f"{v_name}_track_{v_tid}"
+                            else:
+                                cx = (v["bbox"][0] + v["bbox"][2]) // 2
+                                cy = (v["bbox"][1] + v["bbox"][3]) // 2
+                                vkey = f"{v_name}_pos_{cx // 100}_{cy // 100}"
+                            
+                            existing = self.active_violation_tracks.get(vkey)
+                            # Gap threshold: 60 frames (~2.5 sec video time)
+                            if existing and (frame_idx - existing["last_seen_frame"]) <= 60:
+                                # Continuously tracked violation: update tracking state, do not spam incidents
+                                existing["last_seen_frame"] = frame_idx
+                                existing["last_seen_time"] = timestamp_str
+                                existing["occurrences"] += 1
+                                existing["peak_conf"] = max(existing["peak_conf"], v["confidence"])
+                            else:
+                                # New violation instance (or reappeared after cooldown)
+                                new_violation_alerts.append(v)
+                                self.active_violation_tracks[vkey] = {
+                                    "class_name": v_name,
+                                    "track_id": v_tid,
+                                    "first_seen_frame": frame_idx,
+                                    "first_seen_time": timestamp_str,
+                                    "last_seen_frame": frame_idx,
+                                    "last_seen_time": timestamp_str,
+                                    "occurrences": 1,
+                                    "peak_conf": v["confidence"]
+                                }
 
-                # Draw fast OpenCV annotations directly on frame (smooth output)
+                        # Generate single grouped incident for new violation events
+                        if new_violation_alerts:
+                            track_tags = [f"Track #{v['track_id']}" for v in new_violation_alerts if v.get("track_id")]
+                            source_desc = f"Video: {self.filename}"
+                            if track_tags:
+                                source_desc += f" ({', '.join(track_tags)})"
+
+                            alert = check_and_generate_alerts(
+                                frame_bgr=frame,
+                                detections=current_detections,
+                                source=source_desc,
+                                video_timestamp=timestamp_str
+                            )
+                            if alert:
+                                self.violations_summary.append({
+                                    "incident_id": alert["incident_id"],
+                                    "violation": alert["violation_category"],
+                                    "confidence": alert["confidence"],
+                                    "timestamp": timestamp_str,
+                                    "severity": alert["severity"],
+                                    "evidence_url": alert["evidence_path"],
+                                    "tracks": track_tags or ["Tracked"]
+                                })
+
+                # Draw OpenCV annotations with ByteTrack unique IDs directly on frame
                 annotated_frame = draw_fast_annotations_cv2(frame, last_detections)
                 out.write(annotated_frame)
 
@@ -255,11 +350,19 @@ class VideoJob:
             else:
                 self.status = "completed"
                 self.progress = 100.0
+                
+                unique_counts = {c: len(self.unique_class_tracks[c]) for c in MODEL_CLASSES}
+                total_unique_compliant = sum(unique_counts[c] for c in COMPLIANT_CLASSES)
+                total_unique_violations = sum(unique_counts[c] for c in VIOLATION_CLASSES)
+                
                 compliance_val = None
-                if self.total_detections > 0:
-                    compliance_val = max(0.0, min(100.0, ((self.total_detections - self.total_violations) / self.total_detections) * 100.0))
+                if (total_unique_compliant + total_unique_violations) > 0:
+                    compliance_val = round((total_unique_compliant / (total_unique_compliant + total_unique_violations)) * 100.0, 1)
+                elif self.total_detections > 0:
+                    compliance_val = round(max(0.0, min(100.0, ((self.total_detections - self.total_violations) / self.total_detections) * 100.0)), 1)
                 
                 duration = (self.total_frames / orig_fps) if orig_fps > 0 else self.elapsed_time
+                
                 # Record to persistent SQLite database
                 record_video_job_completion(
                     job_id=self.job_id,
@@ -268,7 +371,7 @@ class VideoJob:
                     total_frames=self.total_frames,
                     frames_processed=self.current_frame,
                     total_detections=self.total_detections,
-                    total_violations=self.total_violations,
+                    total_violations=total_unique_violations,
                     compliance_rate=compliance_val
                 )
 

@@ -150,6 +150,7 @@ const elements = {
   // Summary Metrics
   metricVideosAnalyzed: document.getElementById('metricVideosAnalyzed'),
   metricVideoTotalDetections: document.getElementById('metricVideoTotalDetections'),
+  metricVideoUniqueObjects: document.getElementById('metricVideoUniqueObjects'),
   metricVideoViolations: document.getElementById('metricVideoViolations'),
   metricComplianceRate: document.getElementById('metricComplianceRate'),
   countHelmet: document.getElementById('countHelmet'),
@@ -158,9 +159,17 @@ const elements = {
   countGoggles: document.getElementById('countGoggles'),
   countBoots: document.getElementById('countBoots'),
   countViolations: document.getElementById('countViolations'),
+  countHelmetFrames: document.getElementById('countHelmetFrames'),
+  countVestFrames: document.getElementById('countVestFrames'),
+  countGlovesFrames: document.getElementById('countGlovesFrames'),
+  countGogglesFrames: document.getElementById('countGogglesFrames'),
+  countBootsFrames: document.getElementById('countBootsFrames'),
+  countViolationsFrames: document.getElementById('countViolationsFrames'),
   detailTotalFrames: document.getElementById('detailTotalFrames'),
   detailFramesProcessed: document.getElementById('detailFramesProcessed'),
   detailProcessingFps: document.getElementById('detailProcessingFps'),
+  detailTotalDetections: document.getElementById('detailTotalDetections'),
+  detailUniqueObjects: document.getElementById('detailUniqueObjects'),
   detailTotalViolations: document.getElementById('detailTotalViolations'),
   detailProcessingTime: document.getElementById('detailProcessingTime'),
 
@@ -662,14 +671,16 @@ async function fetchSurveillanceStats() {
     if (elements.metricVideosAnalyzed) {
       elements.metricVideosAnalyzed.textContent = stats.videos_analyzed || 0;
     }
-    if (elements.metricVideoTotalDetections) {
-      elements.metricVideoTotalDetections.textContent = (stats.total_detections || 0).toLocaleString();
-    }
-    if (elements.metricVideoViolations) {
-      elements.metricVideoViolations.textContent = (stats.total_violations ?? stats.safety_violations ?? 0).toLocaleString();
-    }
-    if (elements.metricComplianceRate) {
-      elements.metricComplianceRate.textContent = stats.compliance_rate || 'Not enough data';
+    if (!state.isVideoProcessing && !state.activeVideoJobId) {
+      if (elements.metricVideoTotalDetections) {
+        elements.metricVideoTotalDetections.textContent = (stats.total_detections || 0).toLocaleString();
+      }
+      if (elements.metricVideoViolations) {
+        elements.metricVideoViolations.textContent = (stats.total_violations ?? stats.safety_violations ?? 0).toLocaleString();
+      }
+      if (elements.metricComplianceRate) {
+        elements.metricComplianceRate.textContent = stats.compliance_rate || 'Not enough data';
+      }
     }
   } catch (err) {
     console.error('Failed to load surveillance stats:', err);
@@ -912,6 +923,30 @@ function clearVideoStaging() {
   elements.stagedVideoPillCard.style.display = 'none';
   elements.videoProcessingOverlay.style.display = 'none';
   elements.btnAnalyzeVideo.disabled = true;
+
+  // Reset table & details
+  if (elements.countHelmet) elements.countHelmet.textContent = '0';
+  if (elements.countVest) elements.countVest.textContent = '0';
+  if (elements.countGloves) elements.countGloves.textContent = '0';
+  if (elements.countGoggles) elements.countGoggles.textContent = '0';
+  if (elements.countBoots) elements.countBoots.textContent = '0';
+  if (elements.countViolations) elements.countViolations.textContent = '0';
+  if (elements.countHelmetFrames) elements.countHelmetFrames.textContent = '0';
+  if (elements.countVestFrames) elements.countVestFrames.textContent = '0';
+  if (elements.countGlovesFrames) elements.countGlovesFrames.textContent = '0';
+  if (elements.countGogglesFrames) elements.countGogglesFrames.textContent = '0';
+  if (elements.countBootsFrames) elements.countBootsFrames.textContent = '0';
+  if (elements.countViolationsFrames) elements.countViolationsFrames.textContent = '0';
+  if (elements.detailTotalFrames) elements.detailTotalFrames.textContent = '—';
+  if (elements.detailFramesProcessed) elements.detailFramesProcessed.textContent = '—';
+  if (elements.detailProcessingFps) elements.detailProcessingFps.textContent = '—';
+  if (elements.detailTotalDetections) elements.detailTotalDetections.textContent = '—';
+  if (elements.detailUniqueObjects) elements.detailUniqueObjects.textContent = '—';
+  if (elements.detailTotalViolations) elements.detailTotalViolations.textContent = '—';
+  if (elements.detailProcessingTime) elements.detailProcessingTime.textContent = '—';
+  if (elements.timelineTableBody) {
+    elements.timelineTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding: 24px;">No safety violations detected in this video. All safety protocols compliant!</td></tr>';
+  }
 }
 
 async function startVideoAnalysis() {
@@ -967,11 +1002,53 @@ function pollVideoJobProgress(jobId) {
       elements.videoProcessingText.textContent = `Analyzing Frames: ${job.current_frame} / ${job.total_frames} (${Math.round(job.progress)}%)`;
 
       // Update processing details
-      elements.detailTotalFrames.textContent = job.total_frames.toLocaleString();
-      elements.detailFramesProcessed.textContent = job.current_frame.toLocaleString();
-      elements.detailProcessingFps.textContent = job.processing_fps.toFixed(1);
-      elements.detailTotalViolations.textContent = job.total_violations;
+      elements.detailTotalFrames.textContent = (job.total_frames || 0).toLocaleString();
+      elements.detailFramesProcessed.textContent = (job.current_frame || 0).toLocaleString();
+      elements.detailProcessingFps.textContent = (job.processing_fps || 0).toFixed(1);
+      if (elements.detailTotalDetections) {
+        elements.detailTotalDetections.textContent = (job.total_frame_detections || job.total_detections || 0).toLocaleString();
+      }
+      if (elements.detailUniqueObjects) {
+        elements.detailUniqueObjects.textContent = (job.total_unique_objects != null ? job.total_unique_objects : (job.unique_tracked_objects || 0)).toLocaleString();
+      }
+      elements.detailTotalViolations.textContent = (job.total_unique_violations != null ? job.total_unique_violations : (job.unique_violations != null ? job.unique_violations : (job.total_violations || 0))).toLocaleString();
       elements.detailProcessingTime.textContent = `${Math.floor(job.elapsed_time / 60)}:${Math.floor(job.elapsed_time % 60).toString().padStart(2, '0')} min`;
+
+      // Top metric cards (Updated live with tracking results)
+      if (elements.metricVideoTotalDetections) {
+        elements.metricVideoTotalDetections.textContent = (job.total_frame_detections || job.total_detections || 0).toLocaleString();
+      }
+      if (elements.metricVideoUniqueObjects) {
+        elements.metricVideoUniqueObjects.textContent = (job.total_unique_objects != null ? job.total_unique_objects : (job.unique_tracked_objects || 0)).toLocaleString();
+      }
+      if (elements.metricVideoViolations) {
+        elements.metricVideoViolations.textContent = (job.total_unique_violations != null ? job.total_unique_violations : (job.unique_violations != null ? job.unique_violations : (job.total_violations || 0))).toLocaleString();
+      }
+      if (job.compliance_rate != null && elements.metricComplianceRate) {
+        elements.metricComplianceRate.textContent = `${job.compliance_rate}%`;
+      }
+
+      // Detection Summary table: Frame Detections vs Unique Tracked Objects
+      const fc = job.frame_class_counts || job.class_counts || {};
+      const uc = job.unique_class_counts || {};
+
+      // A. Frame counts
+      if (elements.countHelmetFrames) elements.countHelmetFrames.textContent = (fc['helmet'] || 0).toLocaleString();
+      if (elements.countVestFrames) elements.countVestFrames.textContent = (fc['vest'] || 0).toLocaleString();
+      if (elements.countGlovesFrames) elements.countGlovesFrames.textContent = (fc['gloves'] || 0).toLocaleString();
+      if (elements.countGogglesFrames) elements.countGogglesFrames.textContent = (fc['goggles'] || 0).toLocaleString();
+      if (elements.countBootsFrames) elements.countBootsFrames.textContent = (fc['boots'] || 0).toLocaleString();
+      const frameViolations = (fc['no-helmet'] || 0) + (fc['no-vest'] || 0) + (fc['no-gloves'] || 0) + (fc['no-goggles'] || 0) + (fc['no-boots'] || 0);
+      if (elements.countViolationsFrames) elements.countViolationsFrames.textContent = frameViolations.toLocaleString();
+
+      // B. Unique tracked objects
+      if (elements.countHelmet) elements.countHelmet.textContent = (uc['helmet'] != null ? uc['helmet'] : (job.unique_helmets || 0)).toLocaleString();
+      if (elements.countVest) elements.countVest.textContent = (uc['vest'] != null ? uc['vest'] : (job.unique_vests || 0)).toLocaleString();
+      if (elements.countGloves) elements.countGloves.textContent = (uc['gloves'] != null ? uc['gloves'] : (job.unique_gloves || 0)).toLocaleString();
+      if (elements.countGoggles) elements.countGoggles.textContent = (uc['goggles'] != null ? uc['goggles'] : (job.unique_goggles || 0)).toLocaleString();
+      if (elements.countBoots) elements.countBoots.textContent = (uc['boots'] != null ? uc['boots'] : (job.unique_boots || 0)).toLocaleString();
+      const uniqueViolations = (uc['no-helmet'] || 0) + (uc['no-vest'] || 0) + (uc['no-gloves'] || 0) + (uc['no-goggles'] || 0) + (uc['no-boots'] || 0);
+      if (elements.countViolations) elements.countViolations.textContent = (job.total_unique_violations != null ? job.total_unique_violations : uniqueViolations).toLocaleString();
 
       if (job.status === 'completed' || job.status === 'stopped' || job.status === 'failed') {
         clearInterval(state.videoPollingInterval);
@@ -991,25 +1068,10 @@ function pollVideoJobProgress(jobId) {
             elements.mainSurveillanceVideo.play().catch(() => {});
           }
 
-          // Dynamically populate actual class breakdown
-          if (job.class_counts) {
-            if (elements.countHelmet) elements.countHelmet.textContent = job.class_counts['helmet'] || 0;
-            if (elements.countVest) elements.countVest.textContent = job.class_counts['vest'] || 0;
-            if (elements.countGloves) elements.countGloves.textContent = job.class_counts['gloves'] || 0;
-            if (elements.countGoggles) elements.countGoggles.textContent = job.class_counts['goggles'] || 0;
-            if (elements.countBoots) elements.countBoots.textContent = job.class_counts['boots'] || 0;
-            const violationCount = (job.class_counts['no-helmet'] || 0) +
-                                   (job.class_counts['no-vest'] || 0) +
-                                   (job.class_counts['no-gloves'] || 0) +
-                                   (job.class_counts['no-goggles'] || 0) +
-                                   (job.class_counts['no-boots'] || 0);
-            if (elements.countViolations) elements.countViolations.textContent = violationCount;
-          }
-
           renderTimelineViolations(job.violations_summary);
           loadIncidents(); // Refresh alerts table
-          fetchSurveillanceStats(); // Refresh top 4 metric cards dynamically
-          showToast(`Video surveillance complete! Found ${job.total_violations} safety violations.`, 'success');
+          fetchSurveillanceStats(); // Refresh video records count
+          showToast(`Video surveillance complete! Found ${job.total_unique_violations != null ? job.total_unique_violations : job.total_violations} unique safety violations (${job.total_frame_detections || job.total_detections} total frame detections).`, 'success');
         }
       }
     } catch (e) {

@@ -663,6 +663,40 @@ body {
   margin-bottom: 24px;
 }
 
+.metrics-grid.video-metrics-grid {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1280px) {
+  .metrics-grid.video-metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .metrics-grid.video-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.tracking-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tracking-summary-table th {
+  padding: 8px 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.tracking-summary-table td {
+  padding: 8px 6px;
+  font-size: 0.83rem;
+}
+
 .metric-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);

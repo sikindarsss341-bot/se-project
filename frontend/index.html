@@ -378,8 +378,8 @@
             </div>
           </div>
 
-          <!-- Top 4 Summary Cards (Exact match to reference design) -->
-          <div class="metrics-grid">
+          <!-- Top 5 Summary Cards (Tracking & Surveillance) -->
+          <div class="metrics-grid video-metrics-grid">
             <!-- Card 1: Videos Analyzed -->
             <div class="metric-card card-purple-icon">
               <div class="metric-circle-icon icon-circle-purple">
@@ -391,29 +391,40 @@
               </div>
             </div>
 
-            <!-- Card 2: Total Detections -->
+            <!-- Card 2: Total Frame Detections -->
             <div class="metric-card card-green-icon">
               <div class="metric-circle-icon icon-circle-green">
-                <i class="fa-solid fa-helmet-safety"></i>
+                <i class="fa-solid fa-layer-group"></i>
               </div>
               <div class="metric-info">
-                <span class="metric-label">Total Detections</span>
+                <span class="metric-label">Frame Detections</span>
                 <span class="metric-value" id="metricVideoTotalDetections">0</span>
               </div>
             </div>
 
-            <!-- Card 3: Safety Violations -->
+            <!-- Card 3: Unique Tracked Objects -->
+            <div class="metric-card card-blue-icon">
+              <div class="metric-circle-icon icon-circle-blue">
+                <i class="fa-solid fa-fingerprint"></i>
+              </div>
+              <div class="metric-info">
+                <span class="metric-label">Unique Tracked</span>
+                <span class="metric-value" id="metricVideoUniqueObjects">0</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Unique Safety Violations -->
             <div class="metric-card card-orange-icon">
               <div class="metric-circle-icon icon-circle-orange">
                 <i class="fa-solid fa-triangle-exclamation"></i>
               </div>
               <div class="metric-info">
-                <span class="metric-label">Safety Violations</span>
+                <span class="metric-label">Unique Violations</span>
                 <span class="metric-value" id="metricVideoViolations">0</span>
               </div>
             </div>
 
-            <!-- Card 4: Compliance Rate -->
+            <!-- Card 5: Compliance Rate -->
             <div class="metric-card card-blue-icon">
               <div class="metric-circle-icon icon-circle-blue">
                 <i class="fa-solid fa-shield-halved"></i>
@@ -543,59 +554,59 @@
             <!-- COLUMN 3: RIGHT SIDEBAR (Detection Summary & Processing Details) -->
             <div class="video-stats-column">
               
-              <!-- Card A: Detection Summary -->
+              <!-- Card A: Detection Summary (Side-by-side: Frame vs Unique) -->
               <div class="workspace-card detection-summary-card">
-                <div class="card-header">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                   <div class="card-header-title">
                     <i class="fa-solid fa-chart-simple"></i>
                     <span>Detection Summary</span>
                   </div>
+                  <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                    <i class="fa-solid fa-fingerprint"></i> ByteTrack
+                  </span>
                 </div>
-                <div class="card-body" style="padding: 14px 18px;">
-                  <ul class="summary-classes-list">
-                    <li class="summary-class-item">
-                      <div class="class-left">
-                        <i class="fa-solid fa-helmet-safety text-emerald"></i>
-                        <span>Helmet</span>
-                      </div>
-                      <strong class="class-count" id="countHelmet">0</strong>
-                    </li>
-                    <li class="summary-class-item">
-                      <div class="class-left">
-                        <i class="fa-solid fa-vest text-purple"></i>
-                        <span>Vest</span>
-                      </div>
-                      <strong class="class-count" id="countVest">0</strong>
-                    </li>
-                    <li class="summary-class-item">
-                      <div class="class-left">
-                        <i class="fa-solid fa-mitten text-amber"></i>
-                        <span>Gloves</span>
-                      </div>
-                      <strong class="class-count" id="countGloves">0</strong>
-                    </li>
-                    <li class="summary-class-item">
-                      <div class="class-left">
-                        <i class="fa-solid fa-glasses text-blue"></i>
-                        <span>Goggles</span>
-                      </div>
-                      <strong class="class-count" id="countGoggles">0</strong>
-                    </li>
-                    <li class="summary-class-item">
-                      <div class="class-left">
-                        <i class="fa-solid fa-shoe-prints text-cyan"></i>
-                        <span>Boots</span>
-                      </div>
-                      <strong class="class-count" id="countBoots">0</strong>
-                    </li>
-                    <li class="summary-class-item violation-item">
-                      <div class="class-left">
-                        <i class="fa-solid fa-triangle-exclamation text-red"></i>
-                        <span class="text-red font-semibold">Violations (no-*)</span>
-                      </div>
-                      <strong class="class-count text-red" id="countViolations">0</strong>
-                    </li>
-                  </ul>
+                <div class="card-body" style="padding: 12px 14px;">
+                  <table class="tracking-summary-table" style="width: 100%; border-collapse: collapse; font-size: 0.84rem;">
+                    <thead>
+                      <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase;">
+                        <th style="text-align: left; padding: 6px 4px;">Object</th>
+                        <th style="text-align: right; padding: 6px 4px;" title="Total frame detections across all video frames">Frame Detections</th>
+                        <th style="text-align: right; padding: 6px 4px;" title="Unique objects tracked across frames by tracking ID">Unique Objects</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 7px 4px;"><i class="fa-solid fa-helmet-safety text-emerald" style="width: 18px;"></i> Helmet</td>
+                        <td style="text-align: right; padding: 7px 4px; color: var(--text-muted);" id="countHelmetFrames">0</td>
+                        <td style="text-align: right; padding: 7px 4px; font-weight: 700; color: #10b981;" id="countHelmet">0</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 7px 4px;"><i class="fa-solid fa-vest text-purple" style="width: 18px;"></i> Vest</td>
+                        <td style="text-align: right; padding: 7px 4px; color: var(--text-muted);" id="countVestFrames">0</td>
+                        <td style="text-align: right; padding: 7px 4px; font-weight: 700; color: #8b5cf6;" id="countVest">0</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 7px 4px;"><i class="fa-solid fa-glasses text-blue" style="width: 18px;"></i> Goggles</td>
+                        <td style="text-align: right; padding: 7px 4px; color: var(--text-muted);" id="countGogglesFrames">0</td>
+                        <td style="text-align: right; padding: 7px 4px; font-weight: 700; color: #3b82f6;" id="countGoggles">0</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 7px 4px;"><i class="fa-solid fa-mitten text-amber" style="width: 18px;"></i> Gloves</td>
+                        <td style="text-align: right; padding: 7px 4px; color: var(--text-muted);" id="countGlovesFrames">0</td>
+                        <td style="text-align: right; padding: 7px 4px; font-weight: 700; color: #f59e0b;" id="countGloves">0</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 7px 4px;"><i class="fa-solid fa-shoe-prints text-cyan" style="width: 18px;"></i> Boots</td>
+                        <td style="text-align: right; padding: 7px 4px; color: var(--text-muted);" id="countBootsFrames">0</td>
+                        <td style="text-align: right; padding: 7px 4px; font-weight: 700; color: #06b6d4;" id="countBoots">0</td>
+                      </tr>
+                      <tr style="border-top: 1px solid var(--border-color); background: rgba(239, 68, 68, 0.06);">
+                        <td style="padding: 7px 4px; color: #ef4444; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation text-red" style="width: 18px;"></i> Violations (no-*)</td>
+                        <td style="text-align: right; padding: 7px 4px; color: var(--text-muted);" id="countViolationsFrames">0</td>
+                        <td style="text-align: right; padding: 7px 4px; font-weight: 700; color: #ef4444;" id="countViolations">0</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -624,7 +635,17 @@
                     <strong class="detail-val" id="detailProcessingFps">—</strong>
                   </div>
                   <div class="details-row">
-                    <span class="detail-name">Total Violations</span>
+                    <span class="detail-name">Frame Detections</span>
+                    <span class="detail-dots">:</span>
+                    <strong class="detail-val" id="detailTotalDetections">—</strong>
+                  </div>
+                  <div class="details-row">
+                    <span class="detail-name">Unique Objects</span>
+                    <span class="detail-dots">:</span>
+                    <strong class="detail-val text-emerald" id="detailUniqueObjects">—</strong>
+                  </div>
+                  <div class="details-row">
+                    <span class="detail-name">Unique Violations</span>
                     <span class="detail-dots">:</span>
                     <strong class="detail-val text-red" id="detailTotalViolations">—</strong>
                   </div>

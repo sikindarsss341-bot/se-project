@@ -8,3 +8,4 @@ opencv-python-headless>=4.8.0
 pillow>=10.0.0
 reportlab>=4.0.0
 aiofiles>=23.0.0
+lap>=0.5.12
