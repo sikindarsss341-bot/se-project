@@ -5,7 +5,7 @@
 
 // Application State
 const state = {
-  currentView: 'video-detection',
+  currentView: 'dashboard',
   modelInfo: null,
   isModelReady: false,
   confThreshold: 0.15,
@@ -48,7 +48,9 @@ const state = {
     violations: null,
     trends: null,
     severity: null,
-    sources: null
+    sources: null,
+    dashTrends: null,
+    dashViolations: null
   },
 
   // Phase 3: Incident History & Management State
@@ -207,6 +209,17 @@ const elements = {
   thresholdValueBadge: document.getElementById('thresholdValueBadge'),
   btnRefreshModelInfo: document.getElementById('btnRefreshModelInfo'),
   dashClassChips: document.getElementById('dashClassChips'),
+  btnRefreshDashboard: document.getElementById('btnRefreshDashboard'),
+  dashKpiTotalIncidents: document.getElementById('dashKpiTotalIncidents'),
+  dashKpiTotalViolations: document.getElementById('dashKpiTotalViolations'),
+  dashKpiCompliant: document.getElementById('dashKpiCompliant'),
+  dashKpiComplianceRate: document.getElementById('dashKpiComplianceRate'),
+  dashKpiComplianceBadge: document.getElementById('dashKpiComplianceBadge'),
+  dashKpiCritical: document.getElementById('dashKpiCritical'),
+  dashKpiModelStatus: document.getElementById('dashKpiModelStatus'),
+  dashKpiModelSub: document.getElementById('dashKpiModelSub'),
+  dashSpecDevice: document.getElementById('dashSpecDevice'),
+  dashRecentIncidentsBody: document.getElementById('dashRecentIncidentsBody'),
   toastContainer: document.getElementById('toastContainer'),
 
   // Phase 3: Analytics Elements
@@ -301,6 +314,7 @@ const elements = {
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
   setupTopbarAndModals();
+  setupDashboardModule();
   setupImageDetectionModule();
   setupVideoDetectionModule();
   setupLiveMonitoringModule();
@@ -309,6 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupIncidentHistoryModule();
   setupReportsModule();
   setupSettingsModule();
+  loadDashboard();
   fetchModelInfo();
   fetchSurveillanceStats();
   loadIncidents();
@@ -365,7 +380,10 @@ window.navigateTo = function(viewName) {
     loadStorageDiagnostics();
   } else if (viewName === 'alerts') {
     loadIncidents();
-  } else if (viewName === 'dashboard' || viewName === 'model-info') {
+  } else if (viewName === 'dashboard') {
+    loadDashboard();
+    fetchModelInfo();
+  } else if (viewName === 'model-info') {
     fetchModelInfo();
   }
 };
@@ -407,6 +425,208 @@ window.openEvidenceModal = function(imgUrl, incidentId, violation, time) {
   `;
   elements.evidenceModal.style.display = 'flex';
 };
+
+// ============================================================================
+// EXECUTIVE DASHBOARD MODULE
+// ============================================================================
+function setupDashboardModule() {
+  if (elements.btnRefreshDashboard) {
+    elements.btnRefreshDashboard.addEventListener('click', () => {
+      loadDashboard();
+      showToast('Dashboard refreshed with latest surveillance data.', 'info');
+    });
+  }
+}
+
+async function loadDashboard() {
+  try {
+    const [overviewRes, trendsRes, violationsRes, recentRes, modelRes] = await Promise.all([
+      fetch('/api/analytics/overview?time_range=30d'),
+      fetch('/api/analytics/trends?days=7'),
+      fetch('/api/analytics/violations?time_range=30d'),
+      fetch('/api/incidents?limit=6'),
+      fetch('/api/model-info')
+    ]);
+
+    if (overviewRes.ok) {
+      const data = await overviewRes.json();
+      const stats = data.analytics || data;
+      if (elements.dashKpiTotalIncidents) elements.dashKpiTotalIncidents.textContent = stats.total_incidents || 0;
+      if (elements.dashKpiTotalViolations) elements.dashKpiTotalViolations.textContent = stats.total_violations || stats.violation_detections || 0;
+      if (elements.dashKpiCompliant) elements.dashKpiCompliant.textContent = stats.compliant_detections || 0;
+      if (elements.dashKpiCritical) elements.dashKpiCritical.textContent = stats.critical_incidents || 0;
+
+      if (elements.dashKpiComplianceRate && elements.dashKpiComplianceBadge) {
+        const pct = (stats.compliance_percentage !== undefined && stats.compliance_percentage !== null)
+          ? stats.compliance_percentage
+          : (typeof stats.compliance_rate === 'number' ? stats.compliance_rate : null);
+        if (pct !== null) {
+          elements.dashKpiComplianceRate.textContent = `${pct.toFixed(1)}%`;
+          if (pct >= 85) {
+            elements.dashKpiComplianceBadge.className = 'compliance-badge badge-safe';
+            elements.dashKpiComplianceBadge.textContent = 'Compliant';
+          } else if (pct >= 70) {
+            elements.dashKpiComplianceBadge.className = 'compliance-badge badge-warning';
+            elements.dashKpiComplianceBadge.textContent = 'Attention';
+          } else {
+            elements.dashKpiComplianceBadge.className = 'compliance-badge badge-danger';
+            elements.dashKpiComplianceBadge.textContent = 'Violations High';
+          }
+        } else {
+          elements.dashKpiComplianceRate.textContent = stats.compliance_rate || '--%';
+        }
+      }
+    }
+
+    if (modelRes.ok) {
+      const minfo = await modelRes.json();
+      if (elements.dashKpiModelStatus) elements.dashKpiModelStatus.textContent = minfo.status || 'Ready';
+      if (elements.dashKpiModelSub) elements.dashKpiModelSub.textContent = `${minfo.model_name || 'best.pt'} • ${minfo.device || 'CPU'}`;
+      if (elements.dashSpecDevice) elements.dashSpecDevice.textContent = minfo.device || 'CPU (Optimized)';
+
+      // Populate class inventory chips
+      if (elements.dashClassChips && minfo.classes) {
+        elements.dashClassChips.innerHTML = '';
+        const classNames = Object.values(minfo.classes);
+        classNames.forEach(c => {
+          const chip = document.createElement('span');
+          const isViol = c.startsWith('no-');
+          chip.className = `class-chip ${isViol ? 'violation' : 'compliant'}`;
+          chip.innerHTML = `<i class="fa-solid ${isViol ? 'fa-triangle-exclamation' : 'fa-check'}"></i> ${c}`;
+          elements.dashClassChips.appendChild(chip);
+        });
+      }
+    }
+
+    if (trendsRes.ok) {
+      const tdata = await trendsRes.json();
+      renderDashTrendsChart(tdata.trends || []);
+    }
+
+    if (violationsRes.ok) {
+      const vdata = await violationsRes.json();
+      renderDashViolationsChart(vdata.violations || []);
+    }
+
+    if (recentRes.ok && elements.dashRecentIncidentsBody) {
+      const rdata = await recentRes.json();
+      const incidents = rdata.incidents || [];
+      elements.dashRecentIncidentsBody.innerHTML = '';
+      if (incidents.length === 0) {
+        elements.dashRecentIncidentsBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding: 24px;">No safety incidents recorded yet.</td></tr>';
+      } else {
+        incidents.forEach(inc => {
+          const tr = document.createElement('tr');
+          const isCrit = inc.severity === 'CRITICAL';
+          const isHigh = inc.severity === 'HIGH';
+          const sevClass = isCrit ? 'severity-pill-critical' : (isHigh ? 'severity-pill-high' : 'severity-pill-medium');
+          let statusBadgeClass = 'status-badge-new';
+          if (inc.status === 'ACKNOWLEDGED') statusBadgeClass = 'status-badge-ack';
+          if (inc.status === 'RESOLVED') statusBadgeClass = 'status-badge-resolved';
+
+          tr.innerHTML = `
+            <td><strong class="font-mono text-purple">${inc.incident_id}</strong></td>
+            <td><span class="tag-violation-red">${inc.violation_category}</span></td>
+            <td class="font-mono">${(inc.confidence * 100).toFixed(0)}%</td>
+            <td><span class="${sevClass}">${inc.severity}</span></td>
+            <td>${formatSourceLabel(inc.source)}</td>
+            <td class="font-mono text-muted" style="font-size: 0.75rem;">${inc.timestamp}</td>
+            <td class="text-center">
+              <img src="${inc.evidence_path}" class="evidence-tiny-thumb" alt="Evidence" onclick="openIncidentDetailModal('${inc.incident_id}')">
+            </td>
+            <td><span class="${statusBadgeClass}">${inc.status}</span></td>
+            <td style="text-align: right;">
+              <button class="btn btn-outline btn-sm" onclick="openIncidentDetailModal('${inc.incident_id}')">
+                <i class="fa-solid fa-file-pen"></i> Resolve
+              </button>
+            </td>
+          `;
+          elements.dashRecentIncidentsBody.appendChild(tr);
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load dashboard:', err);
+  }
+}
+
+function renderDashTrendsChart(timeline) {
+  const canvas = document.getElementById('dashChartTrends');
+  if (!canvas || typeof Chart === 'undefined') return;
+  if (state.charts.dashTrends) state.charts.dashTrends.destroy();
+
+  const labels = timeline.map(t => t.date);
+  const counts = timeline.map(t => t.count);
+
+  state.charts.dashTrends = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: labels.length ? labels : ['No Data'],
+      datasets: [{
+        label: 'Incident Velocity',
+        data: counts.length ? counts : [0],
+        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(79, 70, 229, 0.08)',
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: '#4f46e5',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+        x: { ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderDashViolationsChart(categories) {
+  const canvas = document.getElementById('dashChartViolations');
+  if (!canvas || typeof Chart === 'undefined') return;
+  if (state.charts.dashViolations) state.charts.dashViolations.destroy();
+
+  const labels = categories.map(c => c.category);
+  const counts = categories.map(c => c.count);
+  const colors = labels.map(label => {
+    const l = label.toLowerCase();
+    if (l.includes('helmet')) return '#ef4444';
+    if (l.includes('vest')) return '#f97316';
+    if (l.includes('gloves')) return '#3b82f6';
+    if (l.includes('goggles')) return '#8b5cf6';
+    if (l.includes('boots')) return '#10b981';
+    return '#6366f1';
+  });
+
+  state.charts.dashViolations = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: labels.length ? labels : ['Helmet', 'Vest', 'Gloves', 'Goggles', 'Boots'],
+      datasets: [{
+        label: 'Violations',
+        data: counts.length ? counts : [0, 0, 0, 0, 0],
+        backgroundColor: colors.length ? colors : ['#ef4444', '#f97316', '#3b82f6', '#8b5cf6', '#10b981'],
+        borderRadius: 6,
+        barThickness: 24
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+        x: { ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+}
 
 // ============================================================================
 // BACKEND MODEL API CONNECTION

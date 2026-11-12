@@ -31,7 +31,7 @@
 
       <!-- Navigation Menu -->
       <nav class="sidebar-nav">
-        <a href="#dashboard" class="nav-item" data-view="dashboard">
+        <a href="#dashboard" class="nav-item active" data-view="dashboard">
           <i class="fa-solid fa-table-columns"></i>
           <span>Dashboard</span>
         </a>
@@ -47,7 +47,7 @@
               <i class="fa-regular fa-image"></i>
               <span>Image Detection</span>
             </a>
-            <a href="#video-detection" class="nav-sub-item active" data-view="video-detection">
+            <a href="#video-detection" class="nav-sub-item" data-view="video-detection">
               <i class="fa-solid fa-video"></i>
               <span>Video Detection</span>
             </a>
@@ -357,7 +357,7 @@
         <!-- ======================================================== -->
         <!-- VIEW: VIDEO DETECTION (MATCHING EXACT REFERENCE IMAGE!)  -->
         <!-- ======================================================== -->
-        <section class="view-section active" id="view-video-detection">
+        <section class="view-section" id="view-video-detection">
           
           <!-- Page Header Banner -->
           <div class="page-title-banner">
@@ -949,121 +949,250 @@
         </section>
 
         <!-- ============================================== -->
-        <!-- VIEW: DASHBOARD (OVERVIEW)                     -->
+        <!-- VIEW: DASHBOARD (EXECUTIVE OVERVIEW)           -->
         <!-- ============================================== -->
-        <section class="view-section" id="view-dashboard">
+        <section class="view-section active" id="view-dashboard">
           <div class="page-title-banner">
             <div class="title-left">
-              <div class="title-icon-box">
-                <i class="fa-solid fa-table-columns"></i>
+              <div class="title-icon-box" style="background: #eef2ff; color: #4f46e5;">
+                <i class="fa-solid fa-gauge-high"></i>
               </div>
               <div class="title-headings">
-                <h2 class="page-title">Executive Dashboard</h2>
+                <h2 class="page-title">Executive Safety Surveillance Dashboard</h2>
                 <p class="page-description">
-                  Real-time status of the AI Industrial Safety Surveillance System and PPE compliance monitor.
+                  Real-time AI monitoring, safety metrics, incident alerts, and PPE compliance surveillance.
                 </p>
               </div>
             </div>
-            <div class="phase-pill-banner">
-              <span class="pill-tag">Phase 2 Surveillance</span>
-              <span class="pill-text">Operational</span>
+            <div class="filter-actions-top" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-primary" onclick="navigateTo('live-monitoring')" style="background: #dc2626;">
+                <i class="fa-solid fa-tower-broadcast"></i> Live Sentinel
+              </button>
+              <button class="btn btn-primary" onclick="navigateTo('video-detection')">
+                <i class="fa-solid fa-video"></i> Video Analysis
+              </button>
+              <button class="btn btn-outline" id="btnRefreshDashboard">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh Dashboard
+              </button>
             </div>
           </div>
 
-          <div class="dashboard-kpi-grid">
-            <div class="kpi-card">
-              <div class="kpi-icon-badge kpi-emerald"><i class="fa-solid fa-heart-pulse"></i></div>
-              <div class="kpi-content">
-                <span class="kpi-subtitle">SYSTEM STATUS</span>
-                <h3 class="kpi-title" id="dashHealthStatus">Operational</h3>
-                <span class="kpi-tag text-emerald"><i class="fa-solid fa-circle-check"></i> FastAPI Backend Live</span>
+          <!-- 6 Dynamic Executive KPI Cards -->
+          <div class="analytics-kpi-grid">
+            <div class="metric-card card-purple-icon">
+              <div class="metric-circle-icon icon-circle-purple"><i class="fa-solid fa-clipboard-list"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Total Incidents</span>
+                <span class="metric-value" id="dashKpiTotalIncidents">0</span>
+                <span class="metric-subtext">Recorded safety violations</span>
               </div>
             </div>
 
-            <div class="kpi-card">
-              <div class="kpi-icon-badge kpi-indigo"><i class="fa-solid fa-microchip"></i></div>
-              <div class="kpi-content">
-                <span class="kpi-subtitle">ACTIVE AI MODEL</span>
-                <h3 class="kpi-title" id="dashModelName">YOLO (best.pt)</h3>
-                <span class="kpi-tag text-indigo"><i class="fa-solid fa-shield"></i> Loaded In-Memory</span>
+            <div class="metric-card card-orange-icon">
+              <div class="metric-circle-icon icon-circle-orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">PPE Violations</span>
+                <span class="metric-value text-red" id="dashKpiTotalViolations">0</span>
+                <span class="metric-subtext">Non-compliant gear instances</span>
               </div>
             </div>
 
-            <div class="kpi-card">
-              <div class="kpi-icon-badge kpi-purple"><i class="fa-solid fa-tags"></i></div>
-              <div class="kpi-content">
-                <span class="kpi-subtitle">DETECTABLE CLASSES</span>
-                <h3 class="kpi-title" id="dashTotalClasses">10 Classes</h3>
-                <span class="kpi-tag text-purple"><i class="fa-solid fa-helmet-safety"></i> PPE & Violations</span>
+            <div class="metric-card card-blue-icon">
+              <div class="metric-circle-icon icon-circle-blue"><i class="fa-solid fa-shield-halved"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Compliant PPE Items</span>
+                <span class="metric-value text-emerald" id="dashKpiCompliant">0</span>
+                <span class="metric-subtext">Verified protective gear</span>
               </div>
             </div>
 
-            <div class="kpi-card">
-              <div class="kpi-icon-badge kpi-amber"><i class="fa-solid fa-bolt"></i></div>
-              <div class="kpi-content">
-                <span class="kpi-subtitle">INFERENCE HARDWARE</span>
-                <h3 class="kpi-title" id="dashDeviceName">CPU (Optimized)</h3>
-                <span class="kpi-tag text-amber"><i class="fa-solid fa-microchip"></i> PyTorch CPU Runtime</span>
+            <div class="metric-card card-green-icon">
+              <div class="metric-circle-icon icon-circle-green"><i class="fa-solid fa-percent"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Compliance Rate</span>
+                <div class="compliance-rate-box">
+                  <span class="metric-value" id="dashKpiComplianceRate">--%</span>
+                  <span class="compliance-badge badge-safe" id="dashKpiComplianceBadge">Safe</span>
+                </div>
+                <span class="metric-subtext">Compliant / Total Detections</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-red-icon">
+              <div class="metric-circle-icon icon-circle-red"><i class="fa-solid fa-circle-exclamation"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">Critical Incidents</span>
+                <span class="metric-value text-red" id="dashKpiCritical">0</span>
+                <span class="metric-subtext">No-Helmet / No-Vest alerts</span>
+              </div>
+            </div>
+
+            <div class="metric-card card-teal-icon">
+              <div class="metric-circle-icon icon-circle-teal"><i class="fa-solid fa-microchip"></i></div>
+              <div class="metric-info">
+                <span class="metric-label">AI Model Status</span>
+                <span class="metric-value text-emerald" style="font-size: 1.15rem;" id="dashKpiModelStatus">Ready</span>
+                <span class="metric-subtext" id="dashKpiModelSub">best.pt • CPU Engine</span>
               </div>
             </div>
           </div>
 
+          <!-- Quick Launch Surveillance Modules (3 Cards) -->
+          <div class="dashboard-quick-grid">
+            <div class="quick-module-card" onclick="navigateTo('image-detection')">
+              <div>
+                <div class="quick-module-header">
+                  <div class="quick-module-icon quick-icon-image"><i class="fa-regular fa-image"></i></div>
+                  <div>
+                    <h4 class="quick-module-title">Image PPE Inspection</h4>
+                    <span class="text-muted" style="font-size: 0.75rem;">Phase 1 Core Engine</span>
+                  </div>
+                </div>
+                <p class="quick-module-desc">Upload workzone photos for instant bounding-box inference, detection confidence scores, and annotated downloads.</p>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" style="width: 100%;">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i> Launch Image Detector
+              </button>
+            </div>
+
+            <div class="quick-module-card" onclick="navigateTo('video-detection')">
+              <div>
+                <div class="quick-module-header">
+                  <div class="quick-module-icon quick-icon-video"><i class="fa-solid fa-video"></i></div>
+                  <div>
+                    <h4 class="quick-module-title">Surveillance Video Analysis</h4>
+                    <span class="text-muted" style="font-size: 0.75rem;">Phase 2 Batch Pipeline</span>
+                  </div>
+                </div>
+                <p class="quick-module-desc">Asynchronous frame-sampling video processing, violation timestamp logging, timeline navigation, and MP4 generation.</p>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" style="width: 100%;">
+                <i class="fa-solid fa-play"></i> Launch Video Surveillance
+              </button>
+            </div>
+
+            <div class="quick-module-card" onclick="navigateTo('live-monitoring')">
+              <div>
+                <div class="quick-module-header">
+                  <div class="quick-module-icon quick-icon-live"><i class="fa-solid fa-tower-broadcast"></i></div>
+                  <div>
+                    <h4 class="quick-module-title">Live Camera Monitoring</h4>
+                    <span class="text-muted" style="font-size: 0.75rem;">Phase 2 Sentinel</span>
+                  </div>
+                </div>
+                <p class="quick-module-desc">Real-time webcam surveillance feed with live canvas overlays, cooldown-controlled audio alerts, and evidence snapshots.</p>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" style="width: 100%;">
+                <i class="fa-solid fa-camera"></i> Launch Live Camera
+              </button>
+            </div>
+          </div>
+
+          <!-- 2 Visual Intelligence Charts -->
+          <div class="dashboard-charts-grid">
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-title">
+                  <i class="fa-solid fa-chart-line"></i>
+                  <span>Recent Incident Velocity (Last 7 Days)</span>
+                </div>
+                <span class="chart-subtitle">Daily recorded safety violations</span>
+              </div>
+              <div class="chart-canvas-container" style="height: 240px;">
+                <canvas id="dashChartTrends"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div class="chart-title">
+                  <i class="fa-solid fa-chart-column"></i>
+                  <span>Violations by PPE Category</span>
+                </div>
+                <span class="chart-subtitle">Frequency of non-compliance per gear type</span>
+              </div>
+              <div class="chart-canvas-container" style="height: 240px;">
+                <canvas id="dashChartViolations"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Incidents Feed Table Card -->
+          <div class="workspace-card" style="margin-bottom: 24px;">
+            <div class="card-header">
+              <div class="card-header-title">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Recent Safety Incidents &amp; Violation Snapshots</span>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" onclick="navigateTo('incident-history')">
+                View Full Audit History <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="detection-table">
+                  <thead>
+                    <tr>
+                      <th>Incident ID</th>
+                      <th>Violation Type</th>
+                      <th>Confidence</th>
+                      <th>Severity</th>
+                      <th>Detection Source</th>
+                      <th>Timestamp</th>
+                      <th>Evidence</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashRecentIncidentsBody">
+                    <tr><td colspan="9" class="text-center text-muted" style="padding: 24px;">Loading recent incidents from SQLite database...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Model Class Inventory & Framework Specs -->
           <div class="dashboard-two-col">
             <div class="dash-panel">
               <div class="panel-header">
-                <h3><i class="fa-solid fa-list-check"></i> Trained Model Class Inventory</h3>
-                <span class="badge-count">10 Detected Categories</span>
+                <h3><i class="fa-solid fa-tags"></i> Trained Model Classes (Index 0 - 9)</h3>
+                <span class="badge-count">Extracted from best.pt</span>
               </div>
-              <p class="panel-desc">Classes identified directly from the checkpoint weights inside <code>best.pt</code>:</p>
+              <p class="panel-desc">All 10 classes detected by the custom trained YOLO model:</p>
               
               <div class="class-chips-container" id="dashClassChips"></div>
 
               <div class="compliance-legend">
-                <div class="legend-item"><span class="legend-dot compliant"></span> Compliant PPE (Helmet, Vest, Gloves, Boots, Goggles)</div>
-                <div class="legend-item"><span class="legend-dot violation"></span> Safety Violation (No-Helmet, No-Vest, No-Gloves, No-Boots, No-Goggles)</div>
+                <div class="legend-item"><span class="legend-dot compliant"></span> Compliant (helmet, vest, gloves, boots, goggles)</div>
+                <div class="legend-item"><span class="legend-dot violation"></span> Violations (no-helmet, no-vest, no-gloves, no-boots, no-goggles)</div>
               </div>
             </div>
 
             <div class="dash-panel">
               <div class="panel-header">
-                <h3><i class="fa-solid fa-circle-check"></i> Surveillance System Modules</h3>
-                <span class="badge-active">Phase 2 Online</span>
+                <h3><i class="fa-solid fa-shield-halved"></i> Surveillance Sentinel Specs</h3>
+                <span class="badge-active">Active</span>
               </div>
+              <p class="panel-desc">Core engine configuration and runtime parameters:</p>
 
-              <ul class="milestone-list">
-                <li class="milestone-item completed">
-                  <div class="milestone-check"><i class="fa-solid fa-check"></i></div>
-                  <div class="milestone-info">
-                    <strong>Image Detection Engine</strong>
-                    <p>Instant PPE compliance validation and bounding box rendering on uploaded images.</p>
-                  </div>
-                </li>
-                <li class="milestone-item completed">
-                  <div class="milestone-check"><i class="fa-solid fa-check"></i></div>
-                  <div class="milestone-info">
-                    <strong>Asynchronous Video Surveillance</strong>
-                    <p>CPU frame-sampling video analysis with MP4 export and incident extraction.</p>
-                  </div>
-                </li>
-                <li class="milestone-item completed">
-                  <div class="milestone-check"><i class="fa-solid fa-check"></i></div>
-                  <div class="milestone-info">
-                    <strong>Live Camera & Automatic Alerts</strong>
-                    <p>Browser camera feed with real-time bounding boxes and SQLite evidence capture.</p>
-                  </div>
-                </li>
-              </ul>
-
-              <div class="quick-action-btns" style="flex-wrap: wrap;">
-                <button type="button" class="btn btn-primary" onclick="navigateTo('video-detection')">
-                  <i class="fa-solid fa-video"></i> Video Detection
-                </button>
-                <button type="button" class="btn btn-primary" onclick="navigateTo('live-monitoring')" style="background: #dc2626;">
-                  <i class="fa-solid fa-tower-broadcast"></i> Live Monitoring
-                </button>
-                <button type="button" class="btn btn-outline" onclick="navigateTo('alerts')">
-                  <i class="fa-solid fa-bell"></i> View Alerts
-                </button>
+              <div class="diagnostics-list">
+                <div class="diag-item">
+                  <span class="diag-label"><i class="fa-solid fa-file-code"></i> AI Checkpoint:</span>
+                  <strong class="diag-value">models/best.pt (30.3 MB)</strong>
+                </div>
+                <div class="diag-item">
+                  <span class="diag-label"><i class="fa-solid fa-microchip"></i> Inference Runtime:</span>
+                  <strong class="diag-value" id="dashSpecDevice">CPU (Optimized)</strong>
+                </div>
+                <div class="diag-item">
+                  <span class="diag-label"><i class="fa-solid fa-sliders"></i> Default Threshold:</span>
+                  <strong class="diag-value">0.15 (15% High Recall)</strong>
+                </div>
+                <div class="diag-item">
+                  <span class="diag-label"><i class="fa-solid fa-database"></i> Database Engine:</span>
+                  <strong class="diag-value text-emerald">SQLite 3 (WAL Mode)</strong>
+                </div>
               </div>
             </div>
           </div>
