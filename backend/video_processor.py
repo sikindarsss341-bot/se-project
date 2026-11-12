@@ -2,6 +2,7 @@ import os
 import time
 import uuid
 import threading
+import subprocess
 from pathlib import Path
 from typing import Dict, Any, Optional
 import cv2
@@ -14,6 +15,51 @@ from backend.database import record_video_job_completion
 
 VIDEOS_DIR = Path(__file__).resolve().parent / "evidence" / "videos"
 VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
+
+def _convert_to_browser_h264(raw_file: str, final_file: str):
+    """
+    Convert OpenCV's raw mp4v video to standard web-compatible H.264 (avc1) with yuv420p & faststart.
+    Enables instant playback across Chrome, Edge, Firefox, Safari, and mobile browsers.
+    """
+    if not os.path.exists(raw_file) or os.path.getsize(raw_file) == 0:
+        return
+
+    ffmpeg_exe = None
+    try:
+        import imageio_ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        import shutil
+        ffmpeg_exe = shutil.which("ffmpeg")
+
+    if ffmpeg_exe:
+        cmd = [
+            ffmpeg_exe, "-y",
+            "-i", raw_file,
+            "-c:v", "libx264",
+            "-preset", "veryfast",
+            "-crf", "23",
+            "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart",
+            final_file
+        ]
+        try:
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+            if res.returncode == 0 and os.path.exists(final_file) and os.path.getsize(final_file) > 0:
+                try:
+                    os.remove(raw_file)
+                except Exception:
+                    pass
+                return
+        except Exception as err:
+            print(f"FFmpeg H.264 encoding error: {err}")
+
+    # Fallback: rename raw to final if ffmpeg is somehow missing or failed
+    if os.path.exists(raw_file) and not os.path.exists(final_file):
+        try:
+            os.replace(raw_file, final_file)
+        except Exception:
+            pass
 
 MODEL_CLASSES = [
     "boots", "gloves", "goggles", "helmet", "vest",
@@ -193,9 +239,10 @@ class VideoJob:
             width = int(width * scale)
             height = int(height * scale)
 
-        # VideoWriter configuration (mp4v codec)
+        # VideoWriter configuration (writes to temporary raw file, then converted to web H.264)
+        raw_output_path = str(VIDEOS_DIR / f"raw_{self.job_id}.mp4")
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(self.output_path, fourcc, orig_fps, (width, height))
+        out = cv2.VideoWriter(raw_output_path, fourcc, orig_fps, (width, height))
 
         self.status = "processing"
         start_time = time.time()
@@ -383,6 +430,8 @@ class VideoJob:
         finally:
             cap.release()
             out.release()
+            # Convert raw OpenCV video to browser-compliant H.264 video with faststart
+            _convert_to_browser_h264(raw_output_path, self.output_path)
             self.elapsed_time = time.time() - start_time
 
 

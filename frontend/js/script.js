@@ -810,18 +810,24 @@ function setupVideoDetectionModule() {
     const v = elements.mainSurveillanceVideo;
     if (v.paused) {
       v.play();
-      elements.ctrlPlayPause.innerHTML = '<i class="fa-solid fa-pause"></i>';
     } else {
       v.pause();
-      elements.ctrlPlayPause.innerHTML = '<i class="fa-solid fa-play"></i>';
     }
+  });
+
+  elements.mainSurveillanceVideo.addEventListener('play', () => {
+    if (elements.ctrlPlayPause) elements.ctrlPlayPause.innerHTML = '<i class="fa-solid fa-pause"></i>';
+  });
+
+  elements.mainSurveillanceVideo.addEventListener('pause', () => {
+    if (elements.ctrlPlayPause) elements.ctrlPlayPause.innerHTML = '<i class="fa-solid fa-play"></i>';
   });
 
   elements.ctrlStop.addEventListener('click', () => {
     const v = elements.mainSurveillanceVideo;
     v.pause();
     v.currentTime = 0;
-    elements.ctrlPlayPause.innerHTML = '<i class="fa-solid fa-play"></i>';
+    if (elements.ctrlPlayPause) elements.ctrlPlayPause.innerHTML = '<i class="fa-solid fa-play"></i>';
   });
 
   // Video Time Update & Scrubber
@@ -1065,7 +1071,13 @@ function pollVideoJobProgress(jobId) {
           // Play annotated video if available
           if (job.annotated_video_url) {
             elements.mainSurveillanceVideo.src = `${job.annotated_video_url}?t=${Date.now()}`;
-            elements.mainSurveillanceVideo.play().catch(() => {});
+            elements.mainSurveillanceVideo.load();
+            elements.mainSurveillanceVideo.play().then(() => {
+              if (elements.ctrlPlayPause) elements.ctrlPlayPause.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            }).catch((err) => {
+              console.log('Autoplay deferred or pending user action:', err);
+              if (elements.ctrlPlayPause) elements.ctrlPlayPause.innerHTML = '<i class="fa-solid fa-play"></i>';
+            });
           }
 
           renderTimelineViolations(job.violations_summary);
