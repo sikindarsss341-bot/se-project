@@ -35,10 +35,15 @@ env/
 *.sqlite3
 backend/safety_surveillance.db
 
-# Logs & Evidence
+# Logs & Evidence & Results
 backend/evidence/
 backend/logs/
+backend/results/
 *.log
+
+# Loose root model downloads
+best*.pt
+!models/best.pt
 
 # Reports (generated at runtime)
 backend/reports/
