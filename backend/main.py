@@ -123,6 +123,19 @@ async def health_check():
 async def model_info():
     """Return model details, architecture, actual class names, and device."""
     info = get_model_info()
+    classes = info.get("classes", {})
+    class_names = list(classes.values()) if isinstance(classes, dict) else classes
+
+    # Clearly report which PPE items are and are not supported by this model
+    supported = sorted([c for c in class_names if not c.startswith("no-")])
+    violations = sorted([c for c in class_names if c.startswith("no-")])
+    unsupported_note = (
+        "MASK is NOT a class in this model. "
+        "The trained model supports: boots, gloves, goggles, helmet, vest "
+        "and their no- violation counterparts. "
+        "Mask detection requires a differently trained model."
+    )
+
     return {
         "success": True,
         "model_name": info.get("model_name", "best.pt"),
@@ -130,10 +143,14 @@ async def model_info():
         "task": info.get("task", "detect"),
         "status": info.get("status", "Unknown"),
         "total_classes": info.get("total_classes", 0),
-        "classes": info.get("classes", {}),
+        "classes": classes,
+        "supported_ppe": supported,
+        "violation_classes": violations,
+        "unsupported_classes": ["mask"],
+        "unsupported_note": unsupported_note,
         "device": info.get("device", "CPU (Optimized)"),
         "device_type": info.get("device_type", "cpu"),
-        "default_confidence_threshold": 0.25,
+        "default_confidence_threshold": 0.15,
         "model_path": info.get("model_path"),
         "error": info.get("error")
     }
@@ -141,7 +158,7 @@ async def model_info():
 @app.post("/api/detect/image")
 def detect_image(
     file: UploadFile = File(...),
-    confidence: float = Query(0.25, ge=0.05, le=1.0)
+    confidence: float = Query(0.15, ge=0.05, le=1.0)
 ):
     """
     Phase 1: Accept uploaded image, execute real YOLO inference in threadpool,
@@ -199,7 +216,7 @@ ALLOWED_VIDEO_EXTS = {".mp4", ".avi", ".mov", ".mkv", ".webm"}
 @app.post("/api/detect/video")
 async def upload_and_detect_video(
     file: UploadFile = File(...),
-    confidence: float = Query(0.25, ge=0.05, le=1.0),
+    confidence: float = Query(0.15, ge=0.05, le=1.0),
     frame_stride: int = Query(4, ge=1, le=15)
 ):
     """Accept uploaded video and initiate background asynchronous YOLO processing job."""
@@ -295,7 +312,7 @@ async def get_live_status():
 @app.post("/api/live/detect-frame")
 def detect_live_frame(
     file: UploadFile = File(...),
-    confidence: float = Query(0.25, ge=0.05, le=1.0)
+    confidence: float = Query(0.15, ge=0.05, le=1.0)
 ):
     """
     Process single webcam frame in threadpool: executes YOLO inference,
@@ -313,7 +330,16 @@ def detect_live_frame(
         raise HTTPException(status_code=400, detail="Invalid camera frame.")
 
     start_time = time.time()
-    results = model.predict(source=frame_bgr, conf=confidence, imgsz=640, device="cpu", verbose=False)
+    results = model.predict(
+        source=frame_bgr,
+        conf=confidence,
+        iou=0.45,
+        imgsz=640,
+        device="cpu",
+        verbose=False,
+        agnostic_nms=False,
+        max_det=100
+    )
     inference_time = round(time.time() - start_time, 3)
 
     detections = []

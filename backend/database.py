@@ -97,7 +97,7 @@ def init_db():
     if cursor.fetchone()["count"] == 0:
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         default_settings = [
-            ("model_confidence_threshold", "0.25", "model", now_str),
+            ("model_confidence_threshold", "0.15", "model", now_str),
             ("video_frame_stride", "4", "detection", now_str),
             ("alert_cooldown_seconds", "5.0", "detection", now_str),
             ("min_severity_alert", "MEDIUM", "detection", now_str),

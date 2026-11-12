@@ -91,8 +91,44 @@ def draw_sleek_annotations(image_np: np.ndarray, detections: list) -> np.ndarray
     annotated_np = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
     return annotated_np
 
+def _letterbox_resize(img_bgr: np.ndarray, target_size: int = 640) -> tuple:
+    """
+    Resize image to target_size with letterboxing (pad to square).
+    Returns (resized_padded_image, scale, pad_x, pad_y).
+    Preserves aspect ratio so the model receives undistorted input.
+    """
+    h, w = img_bgr.shape[:2]
+    scale = target_size / max(h, w)
+    new_w, new_h = int(w * scale), int(h * scale)
+    resized = cv2.resize(img_bgr, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+    # Create square canvas and paste resized image centered
+    canvas = np.full((target_size, target_size, 3), 114, dtype=np.uint8)
+    pad_y = (target_size - new_h) // 2
+    pad_x = (target_size - new_w) // 2
+    canvas[pad_y:pad_y + new_h, pad_x:pad_x + new_w] = resized
+    return canvas, scale, pad_x, pad_y
+
+
+def _unscale_boxes(boxes_xyxy: list, scale: float, pad_x: int, pad_y: int) -> list:
+    """Remove letterbox padding and scale back to original image coordinates."""
+    result = []
+    for (x1, y1, x2, y2) in boxes_xyxy:
+        rx1 = max(0, int((x1 - pad_x) / scale))
+        ry1 = max(0, int((y1 - pad_y) / scale))
+        rx2 = max(0, int((x2 - pad_x) / scale))
+        ry2 = max(0, int((y2 - pad_y) / scale))
+        result.append([rx1, ry1, rx2, ry2])
+    return result
+
+
 def run_image_detection(image_bytes: bytes, filename: str, conf_threshold: float = 0.25) -> dict:
-    """Run real YOLO inference on uploaded image bytes."""
+    """
+    Run real YOLO inference on uploaded image bytes.
+    Uses letterbox preprocessing so aspect ratio is preserved and small
+    images are scaled up to 640x640, maximising recall for all classes
+    (goggles, helmet, vest, gloves, boots and their no- counterparts).
+    MASK is NOT a class in the trained model and will never be returned.
+    """
     model = get_model()
     if model is None:
         return {
@@ -102,7 +138,7 @@ def run_image_detection(image_bytes: bytes, filename: str, conf_threshold: float
             "detections": []
         }
 
-    # Decode image with OpenCV
+    # Decode raw image bytes
     nparr = np.frombuffer(image_bytes, np.uint8)
     img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if img_bgr is None:
@@ -113,34 +149,59 @@ def run_image_detection(image_bytes: bytes, filename: str, conf_threshold: float
             "detections": []
         }
 
+    # Letterbox-resize to 640x640 preserving aspect ratio
+    # This is the most important fix: tiny images (e.g. 253x325) previously
+    # caused YOLO to run on a distorted scale; now they are padded correctly.
+    padded, scale, pad_x, pad_y = _letterbox_resize(img_bgr, target_size=640)
+
     start_time = time.time()
-    
-    # Run inference on CPU
-    results = model.predict(source=img_bgr, conf=conf_threshold, device="cpu", verbose=False)
+
+    # Optimised inference settings:
+    #  - iou=0.45  : standard COCO NMS threshold, avoids merging nearby detections
+    #  - agnostic_nms=False : class-aware NMS, correct for multi-class PPE scenes
+    #  - max_det=100: allow many workers in a single frame
+    results = model.predict(
+        source=padded,
+        conf=conf_threshold,
+        iou=0.45,
+        imgsz=640,
+        device="cpu",
+        verbose=False,
+        agnostic_nms=False,
+        max_det=100
+    )
     inference_time = round(time.time() - start_time, 3)
 
     detections = []
     class_counter = {}
 
+    # Collect raw boxes (still in padded-640 coordinate space)
+    raw_boxes = []
     for r in results:
         names = r.names
         for box in r.boxes:
             cls_id = int(box.cls[0].item())
             class_name = names.get(cls_id, f"class_{cls_id}")
             confidence = round(float(box.conf[0].item()), 2)
-            coords = [int(v) for v in box.xyxy[0].tolist()]
+            raw_coords = [int(v) for v in box.xyxy[0].tolist()]
+            raw_boxes.append((cls_id, class_name, confidence, raw_coords))
 
-            detections.append({
-                "class_id": cls_id,
-                "class_name": class_name,
-                "confidence": confidence,
-                "bbox": coords,
-                "color": get_color_for_class(class_name)
-            })
+    # Unscale bboxes from padded-640 space back to original image coordinates
+    orig_boxes = _unscale_boxes(
+        [rb[3] for rb in raw_boxes], scale, pad_x, pad_y
+    )
 
-            class_counter[class_name] = class_counter.get(class_name, 0) + 1
+    for (cls_id, class_name, confidence, _), orig_coords in zip(raw_boxes, orig_boxes):
+        detections.append({
+            "class_id": cls_id,
+            "class_name": class_name,
+            "confidence": confidence,
+            "bbox": orig_coords,
+            "color": get_color_for_class(class_name)
+        })
+        class_counter[class_name] = class_counter.get(class_name, 0) + 1
 
-    # Generate annotated image
+    # Generate annotated image (drawn on original image, not padded)
     annotated_bgr = draw_sleek_annotations(img_bgr, detections)
 
     # Save to backend/results

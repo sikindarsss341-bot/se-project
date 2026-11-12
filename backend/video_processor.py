@@ -181,8 +181,20 @@ class VideoJob:
 
                 # Run inference on sampled frames (frame stride optimization)
                 if frame_idx % self.frame_stride == 1 or self.frame_stride == 1:
-                    # Run inference on CPU with fixed resolution
-                    results = model.predict(source=frame, conf=self.conf_threshold, imgsz=640, device="cpu", verbose=False)
+                    # Run inference with optimised settings:
+                    # iou=0.45  : standard NMS, avoids merging adjacent PPE items
+                    # max_det=100: allow many workers per frame
+                    # imgsz=640  : model's native input resolution
+                    results = model.predict(
+                        source=frame,
+                        conf=self.conf_threshold,
+                        iou=0.45,
+                        imgsz=640,
+                        device="cpu",
+                        verbose=False,
+                        agnostic_nms=False,
+                        max_det=100
+                    )
                     current_detections = []
                     
                     for r in results:

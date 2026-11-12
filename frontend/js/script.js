@@ -8,7 +8,7 @@ const state = {
   currentView: 'video-detection',
   modelInfo: null,
   isModelReady: false,
-  confThreshold: 0.25,
+  confThreshold: 0.15,
 
   // Image Detection State (Phase 1)
   selectedImageFile: null,
@@ -709,7 +709,7 @@ async function startVideoAnalysis() {
   formData.append('file', state.selectedVideoFile);
 
   try {
-    const res = await fetch('/api/detect/video?confidence=0.20&frame_stride=4', {
+    const res = await fetch('/api/detect/video?confidence=0.15&frame_stride=4', {
       method: 'POST',
       body: formData
     });
