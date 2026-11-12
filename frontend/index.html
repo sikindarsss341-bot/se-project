@@ -1150,6 +1150,8 @@
               <span class="slider-max">0.95</span>
             </div>
           </div>
+        </section>
+
         <!-- ============================================== -->
         <!-- VIEW: ADVANCED ANALYTICS DASHBOARD (PHASE 3)   -->
         <!-- ============================================== -->
@@ -1796,7 +1798,11 @@
                   </div>
                   <div class="diag-item">
                     <span class="diag-label"><i class="fa-solid fa-circle-check text-emerald"></i> Backend Server Status:</span>
-                    <strong class="diag-value text-emerald">Online (FastAPI 0.115)</strong>
+                    <strong class="diag-value text-emerald" id="diagBackendStatus">Online (FastAPI 0.115)</strong>
+                  </div>
+                  <div class="diag-item">
+                    <span class="diag-label"><i class="fa-solid fa-database text-emerald"></i> Database Connection:</span>
+                    <strong class="diag-value text-emerald" id="diagDbStatus">Connected (SQLite WAL)</strong>
                   </div>
                 </div>
 

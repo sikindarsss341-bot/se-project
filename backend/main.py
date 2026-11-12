@@ -2,6 +2,7 @@ import os
 import time
 import uuid
 import shutil
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from contextlib import asynccontextmanager
@@ -594,21 +595,36 @@ def get_reports_summary():
 @app.post("/api/reports/generate")
 def generate_report_endpoint(req: ReportGenerateRequest):
     """Generate professional PDF or CSV report based on filtered real database records."""
+    # Compute date ranges if not explicitly provided
+    start_date = req.start_date
+    end_date = req.end_date
+    now = datetime.now()
+    if not start_date:
+        if req.report_type == "daily":
+            start_date = now.strftime("%Y-%m-%d 00:00:00")
+            end_date = now.strftime("%Y-%m-%d 23:59:59")
+        elif req.report_type == "weekly":
+            start_date = (now - timedelta(days=7)).strftime("%Y-%m-%d 00:00:00")
+            end_date = now.strftime("%Y-%m-%d 23:59:59")
+        elif req.report_type == "monthly":
+            start_date = (now - timedelta(days=30)).strftime("%Y-%m-%d 00:00:00")
+            end_date = now.strftime("%Y-%m-%d 23:59:59")
+
     # 1. Fetch filtered incident records
     res = get_incidents_filtered(
         violation=req.violation_category,
         severity=req.severity,
         source=req.source,
-        start_date=req.start_date,
-        end_date=req.end_date,
+        start_date=start_date,
+        end_date=end_date,
         limit=500
     )
     incidents = res.get("incidents", [])
 
     # 2. Get analytics overview for report stats banner
     overview = get_analytics_overview(
-        start_date=req.start_date,
-        end_date=req.end_date,
+        start_date=start_date,
+        end_date=end_date,
         category=req.violation_category,
         severity=req.severity,
         source=req.source
@@ -623,16 +639,16 @@ def generate_report_endpoint(req: ReportGenerateRequest):
             incidents=incidents,
             report_type=req.report_type,
             title=title,
-            start_date=req.start_date,
-            end_date=req.end_date
+            start_date=start_date,
+            end_date=end_date
         )
     else:
         filepath = generate_pdf_report(
             incidents=incidents,
             report_type=req.report_type,
             title=title,
-            start_date=req.start_date,
-            end_date=req.end_date,
+            start_date=start_date,
+            end_date=end_date,
             stats=overview
         )
 
@@ -641,8 +657,8 @@ def generate_report_endpoint(req: ReportGenerateRequest):
         report_id=report_id,
         report_type=req.report_type,
         title=title,
-        start_date=req.start_date or "Earliest",
-        end_date=req.end_date or "Present",
+        start_date=start_date or "Earliest",
+        end_date=end_date or "Present",
         total_incidents=len(incidents),
         fmt=fmt,
         file_path=str(filepath)

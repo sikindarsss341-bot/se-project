@@ -290,7 +290,9 @@ const elements = {
   diagStorageSize: document.getElementById('diagStorageSize'),
   diagTotalIncidents: document.getElementById('diagTotalIncidents'),
   diagTotalVideos: document.getElementById('diagTotalVideos'),
-  diagTotalReports: document.getElementById('diagTotalReports')
+  diagTotalReports: document.getElementById('diagTotalReports'),
+  diagBackendStatus: document.getElementById('diagBackendStatus'),
+  diagDbStatus: document.getElementById('diagDbStatus')
 };
 
 // ============================================================================
@@ -363,6 +365,8 @@ window.navigateTo = function(viewName) {
     loadStorageDiagnostics();
   } else if (viewName === 'alerts') {
     loadIncidents();
+  } else if (viewName === 'dashboard' || viewName === 'model-info') {
+    fetchModelInfo();
   }
 };
 
@@ -2017,6 +2021,36 @@ function setupReportsModule() {
     elements.formatCardPdf.classList.remove('active');
   });
 
+  // Report type presets date handler
+  if (elements.reportTypeSelect) {
+    const updateReportDates = () => {
+      const type = elements.reportTypeSelect.value;
+      const today = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const format = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+      if (type === 'daily') {
+        elements.reportStartDate.value = format(today);
+        elements.reportEndDate.value = format(today);
+      } else if (type === 'weekly') {
+        const past = new Date(today);
+        past.setDate(past.getDate() - 7);
+        elements.reportStartDate.value = format(past);
+        elements.reportEndDate.value = format(today);
+      } else if (type === 'monthly') {
+        const past = new Date(today);
+        past.setDate(past.getDate() - 30);
+        elements.reportStartDate.value = format(past);
+        elements.reportEndDate.value = format(today);
+      } else if (type === 'custom') {
+        // Leave existing values or let user pick freely
+      }
+    };
+    elements.reportTypeSelect.addEventListener('change', updateReportDates);
+    // Initialize default weekly dates
+    updateReportDates();
+  }
+
   // Report Form submit
   elements.reportGenerationForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -2164,8 +2198,9 @@ async function loadSystemSettings() {
       elements.settingsCooldown.value = s.alert_cooldown_seconds;
     }
 
-    if (elements.settingsMinSeverity && s.min_severity_level) {
-      elements.settingsMinSeverity.value = s.min_severity_level;
+    const minSev = s.min_severity_alert || s.min_severity_level;
+    if (elements.settingsMinSeverity && minSev) {
+      elements.settingsMinSeverity.value = minSev;
     }
 
     if (elements.settingsFacilityName && s.facility_name) {
@@ -2196,6 +2231,7 @@ async function saveSystemSettings() {
         model_confidence_threshold: conf,
         video_frame_stride: stride,
         alert_cooldown_seconds: cooldown,
+        min_severity_alert: minSev,
         min_severity_level: minSev,
         facility_name: facility
       })
@@ -2232,6 +2268,13 @@ async function loadStorageDiagnostics(existingData = null) {
     }
 
     const counts = data.evidence_counts || {};
+    const sys = data.system_info || {};
+    if (elements.diagBackendStatus) {
+      elements.diagBackendStatus.textContent = sys.backend_status || 'Online (FastAPI 0.115)';
+    }
+    if (elements.diagDbStatus) {
+      elements.diagDbStatus.textContent = sys.database_status || 'Connected (SQLite WAL)';
+    }
     if (elements.diagTotalVideos) {
       elements.diagTotalVideos.textContent = counts.videos || 0;
     }
